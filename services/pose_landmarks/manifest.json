@@ -1,0 +1,20 @@
+{
+    "service_name": "Pose Landmarks",
+    "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
+    "description": "This service detects full body pose landmarks of a human in an image provided as an OpenCV Mat object. It uses Google MediaPipe's Pose Landmarker solution",
+    "major_version": "0",
+    "minor_version": "1",
+    "platform": "*",
+    "architecture": "*",
+    "hardware_requirements": {
+        "min_num_cpu_core": 1,
+        "min_cpu_frequency": 0,
+        "min_free_memory": 0,
+        "min_free_disk": 0,
+        "required_connected_usb_devices": []
+    },
+    "is_data_source": false,
+    "service_class": "PoseLandmarks",
+    "processing_queue_size": 100,
+    "service_processing_fps": 30
+}
