@@ -8,3 +8,4 @@ class ServiceDataTypes(IntEnum):
     Float = 3
     String = 4
     Boolean = 5
+    List = 6
