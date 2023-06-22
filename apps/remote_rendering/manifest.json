@@ -1,0 +1,13 @@
+{
+    "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
+    "name": "Remote Rendering",
+    "description": "This app shows how to use the OpenGL Renderer Service.",
+    "major_version": "0",
+    "minor_version": "1",
+    "conda_env_name": "cortic_aiot_development",
+    "entry_point": "RemoteRendering",
+    "max_fps": 30,
+    "scale_mode": "aspect_fit",
+    "enable_debug_log": false,
+    "debug_log_max_kb_size": 100
+}
