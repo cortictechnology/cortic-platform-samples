@@ -45,7 +45,7 @@ class ImageClassification(Service):
     def process_result(self, image, classification_result, draw_categories=True):
         annotated_image = image.copy()
         top_classifications = []
-        for k in self.top_k:
+        for k in range(self.top_k):
             catetory_name = classification_result.classifications[0].categories[k].category_name
             score = classification_result.classifications[0].categories[k].score
             top_classifications.append(
