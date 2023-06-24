@@ -64,7 +64,12 @@ class FaceRecognition(App):
                                 button_color=self.button_selected_color,
                                 on_event=self.compare_button_callback)
 
-        self.loader = CircularLoader([(1280 - 60)/2, (720-60)/2, 60, 60])
+        self.blank_screen = Container([0, 0, 1280, 720])
+        self.blank_screen.alpha = 0.7
+        self.blank_screen.background = "#000000"
+        self.blank_screen.visible = False
+
+        self.loader = CircularLoader([(1280 - 60)/2, (720-60)/2, 60, 60], color="#ffffff")
         self.loader.visible = False
 
         self.similarity_label = Label([(1280 - 400)/2, 620, 400, 40], data="Similarity: ", font_size=28, font_color="#ffffff", alignment="center")
@@ -77,6 +82,7 @@ class FaceRecognition(App):
         self.background_container.children.append(self.browse_query_image_button)
         self.background_container.children.append(self.query_image_label)
         self.background_container.children.append(self.compare_button)
+        self.background_container.children.append(self.blank_screen)
         self.background_container.children.append(self.loader)
         self.background_container.children.append(self.similarity_label)
 
@@ -89,12 +95,16 @@ class FaceRecognition(App):
         return image
 
     def compare_button_callback(self, data):
+        self.blank_screen.visible = True
         self.loader.visible = True
         self.widget_tree.update(self.loader)
+        self.widget_tree.update(self.blank_screen)
     
         result = face_recognition({"reference_image": self.reference_image_numpy, "query_image": self.query_image_numpy})
         self.loader.visible = False
+        self.blank_screen.visible = False
         self.widget_tree.update(self.loader)
+        self.widget_tree.update(self.blank_screen)
         if result:
             if isinstance(result, ExceptionTypes):
                 print("Error: ", result)

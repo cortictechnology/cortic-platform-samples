@@ -56,8 +56,13 @@ class MonocularDepthEstimation(App):
                                 font_size=25,
                                 button_color=self.button_selected_color,
                                 on_event=self.estimate_depth_button_callback)
+        
+        self.blank_screen = Container([0, 0, 1280, 720])
+        self.blank_screen.alpha = 0.7
+        self.blank_screen.background = "#000000"
+        self.blank_screen.visible = False
 
-        self.loader = CircularLoader([(1280 - 60)/2, (720-60)/2, 60, 60])
+        self.loader = CircularLoader([(1280 - 60)/2, (720-60)/2, 60, 60], color="#ffffff")
         self.loader.visible = False
 
         self.background_container.children.append(self.source_image)
@@ -66,6 +71,7 @@ class MonocularDepthEstimation(App):
         self.background_container.children.append(self.depth_image)
         self.background_container.children.append(self.depth_image_label)
         self.background_container.children.append(self.estimate_depth_button)
+        self.background_container.children.append(self.blank_screen)
         self.background_container.children.append(self.loader)
 
         self.widget_tree.add(self.background_container)
@@ -84,13 +90,17 @@ class MonocularDepthEstimation(App):
             self.depth_image.update_data("image_data", None)
 
     def estimate_depth_button_callback(self, data):
+        self.blank_screen.visible = True
         self.loader.visible = True
+        self.widget_tree.update(self.blank_screen)
         self.widget_tree.update(self.loader)
 
         result = glpn_monocular_depth_estimation({"image": self.source_image_numpy})
 
         self.loader.visible = False
+        self.blank_screen.visible = False
         self.widget_tree.update(self.loader)
+        self.widget_tree.update(self.blank_screen)
         if result:
             if isinstance(result, ExceptionTypes):
                 print("Error: ", result)
