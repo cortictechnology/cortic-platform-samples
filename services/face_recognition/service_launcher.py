@@ -36,6 +36,7 @@ logging.basicConfig(stream=real_stdout, level=logging.INFO)
 
 def communication_func():
     global dm_conn
+    global this_service
     global stop_service
     global activate_service
     global task_queue
@@ -47,6 +48,17 @@ def communication_func():
                 activate_service = msg["activate"]
             elif "task_data" in msg:
                 task_queue.append(msg["task_data"])
+            elif "set_states" in msg:
+                if this_service is not None:
+                    this_service.context.set_states(msg["set_states"]["hub"],
+                                                    msg["set_states"]["app"],
+                                                    msg["set_states"]["pipeline"],
+                                                    msg["set_states"]["states"])
+            elif "reset_states" in msg:
+                if this_service is not None:
+                    this_service.context.reset_states(msg["reset_states"]["hub"],
+                                                        msg["reset_states"]["app"],
+                                                        msg["reset_states"]["pipeline"])
             elif "stop_service" in msg:
                 stop_service = True
             elif "ping" in msg:
@@ -105,7 +117,14 @@ def main(
         service_config = json.loads(f.read())
     service_class_name = service_config["service_class"]
     service = getattr(service_main, service_class_name)
-    this_service = service()
+    try:
+        this_service = service()
+    except Exception as e:
+        log(
+            "Failed to initialize service class, error: " + str(e),
+            LogLevel.Error,
+        )
+        fatal_error = True
     is_data_source = service_config["is_data_source"]
     # is_data_source = False
     # if len(this_service.input_type) == 0:
@@ -245,6 +264,7 @@ def main(
                 task_data = task_queue.popleft()
                 if task_data:
                     self_guid = task_data["self_guid"]
+                    hub = task_data["hub"]
                     app = task_data["app"]
                     pipeline = task_data["pipeline"]
                     try:
@@ -300,6 +320,9 @@ def main(
                                     == ServiceDataTypes.NumpyArray
                                 ):
                                     task_data["data"][input_name] = np.array(data)
+                        this_service._current_task_source_hub = hub
+                        this_service._current_task_source_app = app
+                        this_service._current_task_source_pipeline = pipeline
                         result_data = this_service.process(task_data["data"])
                         if not isinstance(result_data, dict):
                             log(
@@ -432,8 +455,14 @@ def main(
                         if remaining_time > 0:
                             time.sleep(remaining_time)
 
-                    except Exception:
-                        print("Exception occured!")
+                    except Exception as e:
+                        log(
+                            "Exception: "
+                            + str(e)
+                            + " in "
+                            + service_name,
+                            LogLevel.Error,
+                        )
                         print(traceback.format_exc())
                         dm_conn.send(
                             {

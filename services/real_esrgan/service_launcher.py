@@ -117,7 +117,14 @@ def main(
         service_config = json.loads(f.read())
     service_class_name = service_config["service_class"]
     service = getattr(service_main, service_class_name)
-    this_service = service()
+    try:
+        this_service = service()
+    except Exception as e:
+        log(
+            "Failed to initialize service class, error: " + str(e),
+            LogLevel.Error,
+        )
+        fatal_error = True
     is_data_source = service_config["is_data_source"]
     # is_data_source = False
     # if len(this_service.input_type) == 0:
@@ -448,8 +455,14 @@ def main(
                         if remaining_time > 0:
                             time.sleep(remaining_time)
 
-                    except Exception:
-                        print("Exception occured!")
+                    except Exception as e:
+                        log(
+                            "Exception: "
+                            + str(e)
+                            + " in "
+                            + service_name,
+                            LogLevel.Error,
+                        )
                         print(traceback.format_exc())
                         dm_conn.send(
                             {
