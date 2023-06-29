@@ -125,6 +125,7 @@ def main(
             LogLevel.Error,
         )
         fatal_error = True
+    this_service.config = service_config
     is_data_source = service_config["is_data_source"]
     # is_data_source = False
     # if len(this_service.input_type) == 0:
@@ -455,7 +456,7 @@ def main(
                         if remaining_time > 0:
                             time.sleep(remaining_time)
 
-                    except Exception as e:
+                    except Exception:
                         log(
                             "Exception: "
                             + str(e)

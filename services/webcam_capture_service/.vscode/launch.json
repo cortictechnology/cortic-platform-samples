@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Attach",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "0.0.0.0",
+                "port": 5678,
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/Users/michael/development/main/cortic-device-services/device/python/cortic/services/2653f188-3452-4ad6-b5d8-219c8a0b4391/webcam_capture_service_0_1"
+                }
+            ],
+            "logToFile": true
+        }
+    ]
+}

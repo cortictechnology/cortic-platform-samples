@@ -30,9 +30,7 @@ class FaceRecognition(Service):
     def activate(self):
         self.detector = SCRFD(os.path.join(self.assets_dir, 'det_10g.onnx'))
         self.recognizer = ArcFaceONNX(os.path.join(self.assets_dir, 'w600k_r50.onnx'))
-        # Change to 0 or higher to use GPU
         self.detector.prepare(-1)
-        # Change to 0 or higher to use GPU
         self.recognizer.prepare(-1)
         log("FaceRecognition: <p style='color:blue'>Activated</p>")
 
@@ -51,7 +49,9 @@ class FaceRecognition(Service):
         feat1 = self.recognizer.get(input_data["reference_image"], kps1)
         feat2 = self.recognizer.get(input_data["query_image"], kps2)
         sim = self.recognizer.compute_sim(feat1, feat2)
-        return {"similarity": sim, "message": "Comparison Successful"}
+        if self.context.get_state("confidence_scaling", False):
+            sim = 1/(1 + np.exp(-sim))
+        return {"similarity":  float(sim), "message": "Comparison Successful"}
 
     def deactivate(self):
         self.detector = None
