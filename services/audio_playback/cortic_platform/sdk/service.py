@@ -22,7 +22,6 @@ class Context:
             if self.service.config["is_data_source"]:
                 key = "___" + state_name
         if key not in self.states:
-            print("Warning: " + key + " not found")
             return default_value
         return self.states[key]
     

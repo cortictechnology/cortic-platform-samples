@@ -2,7 +2,7 @@
 
 import torch
 from mobile_encoder.tiny_vit_sam import TinyViT
-from segment_anything.modeling import ImageEncoderViT, MaskDecoder, PromptEncoder, Sam, TwoWayTransformer
+from mobile_sam.modeling import ImageEncoderViT, MaskDecoder, PromptEncoder, Sam, TwoWayTransformer
 def setup_model():
     prompt_embed_dim = 256
     image_size = 1024

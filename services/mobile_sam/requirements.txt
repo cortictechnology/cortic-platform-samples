@@ -1,4 +1,4 @@
 torch
 torchvision
 timm
-segment_anything @ git+https://github.com/ChaoningZhang/MobileSAM
+mobile_sam @ git+https://github.com/ChaoningZhang/MobileSAM

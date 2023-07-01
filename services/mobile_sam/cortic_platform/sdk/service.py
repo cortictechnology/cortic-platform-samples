@@ -22,19 +22,24 @@ class Context:
             if self.service.config["is_data_source"]:
                 key = "___" + state_name
         if key not in self.states:
-            print("Warning: " + key + " not found")
             return default_value
         return self.states[key]
     
-    def set_states(self, hub_name, app_name, pipeline_name, states: dict):
+    def set_states(self, states: dict):
+        self._set_states(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline, states)
+    
+    def _set_states(self, hub_name, app_name, pipeline_name, states: dict):
         for state_name, state_value in states.items():
             key = hub_name + "_" + app_name + "_" + pipeline_name + "_" + state_name
             if self.service.config is not None:
                 if self.service.config["is_data_source"]:
                     key = "___" + state_name
             self.states[key] = state_value
+
+    def reset_states(self):
+        self._reset_states(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline)
     
-    def reset_states(self, hub_name, app_name, pipeline_name):
+    def _reset_states(self, hub_name, app_name, pipeline_name):
         for key in list(self.states.keys()):
             target_key = hub_name + "_" + app_name + "_" + pipeline_name
             if self.service.config is not None:

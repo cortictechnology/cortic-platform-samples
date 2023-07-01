@@ -50,13 +50,13 @@ def communication_func():
                 task_queue.append(msg["task_data"])
             elif "set_states" in msg:
                 if this_service is not None:
-                    this_service.context.set_states(msg["set_states"]["hub"],
+                    this_service.context._set_states(msg["set_states"]["hub"],
                                                     msg["set_states"]["app"],
                                                     msg["set_states"]["pipeline"],
                                                     msg["set_states"]["states"])
             elif "reset_states" in msg:
                 if this_service is not None:
-                    this_service.context.reset_states(msg["reset_states"]["hub"],
+                    this_service.context._reset_states(msg["reset_states"]["hub"],
                                                         msg["reset_states"]["app"],
                                                         msg["reset_states"]["pipeline"])
             elif "stop_service" in msg:
@@ -456,7 +456,7 @@ def main(
                         if remaining_time > 0:
                             time.sleep(remaining_time)
 
-                    except Exception:
+                    except Exception as e:
                         log(
                             "Exception: "
                             + str(e)
