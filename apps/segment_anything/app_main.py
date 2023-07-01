@@ -21,6 +21,11 @@ class SegmentAnything(App):
     def __init__(self):
         super().__init__()
         self.source_image_numpy = None
+        self.start_x = 0
+        self.start_y = 0
+        self.end_x = 0
+        self.end = 0
+        self.current_box = np.array([])
 
     def setup(self):
         self.button_selected_color = "#03c24a"
@@ -57,6 +62,13 @@ class SegmentAnything(App):
 
         self.segmented_image_label = Label([680, 100, 500, 40], data="Segmented Image", font_size=24, font_color="#ffffff", alignment="center")
         
+        self.clear_button = Button([(1280-200)/2, 620, 200, 50], 
+                                label="Reset",
+                                font_size=25,
+                                button_color=self.button_selected_color,
+                                on_event=self.clear_button_callback)
+
+
         self.blank_screen = Container([0, 0, 1280, 720])
         self.blank_screen.alpha = 0.7
         self.blank_screen.background = "#000000"
@@ -73,6 +85,7 @@ class SegmentAnything(App):
         self.background_container.children.append(self.source_image_label)
         self.background_container.children.append(self.segmented_image)
         self.background_container.children.append(self.segmented_image_label)
+        self.background_container.children.append(self.clear_button)
         self.background_container.children.append(self.blank_screen)
         self.background_container.children.append(self.loader)
 
@@ -84,21 +97,61 @@ class SegmentAnything(App):
             image = base64.b64encode(image_file.read()).decode("ascii")
         return image
     
+    def read_image_from_numpy(self, image_numpy):
+        _, image = cv2.imencode(".jpeg", image_numpy)
+        image = base64.b64encode(image).decode("ascii")
+        return image
+    
     def source_button_callback(self, data):
         if data != "":
             self.source_image_numpy = cv2.imread(data)
-            self.source_image.update_data("image_data", self.read_image(data))
+            self.source_image.update_image(self.read_image(data))
+            self.scaled_image_width = 375 * self.source_image_numpy.shape[1] / self.source_image_numpy.shape[0]
             self.segmented_image.clear_data()
+            self.reset_service_state("mobile_sam")
+
+    def clear_button_callback(self, data):
+        self.reset_service_state("mobile_sam")
+        self.current_box = np.array([])
+        self.source_image.update_image(self.read_image_from_numpy(self.source_image_numpy))
+        self.segmented_image.update_image(self.read_image_from_numpy(self.source_image_numpy))
     
     def on_mouse_event(self, event_type, event_data):
         if self.source_image_numpy is not None:
             if event_type == "tap":
-                local_x = event_data["x"]
-                local_y = event_data["y"]
-                image_y = local_y / 375 * self.source_image_numpy.shape[0]
-                scaled_image_width = 375 * self.source_image_numpy.shape[1] / self.source_image_numpy.shape[0]
-                image_x = (local_x - (500 - scaled_image_width)/2) / 375 * self.source_image_numpy.shape[0]
-                self.segment_image(np.array([[int(image_x), int(image_y)]]), np.array([1]), np.array([]))
+                image_x = (event_data["x"] - (500 - self.scaled_image_width)/2) / 375 * self.source_image_numpy.shape[0]
+                image_y = event_data["y"] / 375 * self.source_image_numpy.shape[0]
+                self.source_image.update_image(self.read_image_from_numpy(self.source_image_numpy))
+                self.segment_image(np.array([[int(image_x), int(image_y)]]), np.array([1]), self.current_box)
+            elif event_type == "secondary_tap":
+                image_x = (event_data["x"] - (500 - self.scaled_image_width)/2) / 375 * self.source_image_numpy.shape[0]
+                image_y = event_data["y"] / 375 * self.source_image_numpy.shape[0]
+                self.source_image.update_image(self.read_image_from_numpy(self.source_image_numpy))
+                self.segment_image(np.array([[int(image_x), int(image_y)]]), np.array([0]), self.current_box)
+            elif event_type == "pan_start":
+                self.start_x = int((event_data["x"] - (500 - self.scaled_image_width)/2) / 375 * self.source_image_numpy.shape[0])
+                self.start_y = int(event_data["y"] / 375 * self.source_image_numpy.shape[0])
+                self.source_image.update_image(self.read_image_from_numpy(self.source_image_numpy))
+            elif event_type == "pan_update":
+                self.end_x = int((event_data["x"] - (500 - self.scaled_image_width)/2) / 375 * self.source_image_numpy.shape[0])
+                self.end_y = int(event_data["y"] / 375 * self.source_image_numpy.shape[0])
+                drawed_image = cv2.rectangle(self.source_image_numpy.copy(), (self.start_x, self.start_y), (self.end_x, self.end_y), (0, 0, 255), 2)
+                self.source_image.update_image(self.read_image_from_numpy(drawed_image))
+            elif event_type == "pan_end":
+                if self.end_x < self.start_x:
+                    temp = self.end_x
+                    self.end_x = self.start_x
+                    self.start_x = temp
+                if self.end_y < self.start_y:
+                    temp = self.end_y
+                    self.end_y = self.start_y
+                    self.start_y = temp
+                self.current_box = np.array([int(self.start_x), int(self.start_y), int(self.end_x), int(self.end_y)])
+                self.segment_image(np.array([]), np.array([1]), self.current_box)
+                self.start_x = 0
+                self.start_y = 0
+                self.end_x = 0
+                self.end = 0
 
     def segment_image(self, input_points, input_labels, input_box):
         self.blank_screen.visible = True
@@ -108,8 +161,9 @@ class SegmentAnything(App):
 
         result = mobile_sam({"image": self.source_image_numpy, 
                              "input_points": input_points,
-                             "input_labels": np.array([1]),
-                             "input_box": np.array([])})
+                             "input_labels": input_labels,
+                             "input_box": input_box,
+                             "use_previous_mask": False})
 
         self.loader.visible = False
         self.blank_screen.visible = False
@@ -119,8 +173,7 @@ class SegmentAnything(App):
             if isinstance(result, ExceptionTypes):
                 print("Error: ", result)
             else:
-                print(result["scores"])
-                self.segmented_image.update_data("image_data", result["masked_image"])
+                self.segmented_image.update_image(result["masked_image"])
 
     def process(self):
         self.widget_tree.update()
