@@ -8,6 +8,14 @@ service_registry.json file as needed.
 """
 from cortic_platform.sdk.app_manager import service_handle
 @service_handle
-def audio_playback(task_data, device_name='', on_result=None, timeout=None):
+def audio_playback(task_data, device_name='', on_result=None, timeout=None, service_states={}):
+  pass
+
+@service_handle
+def audio_file_capture(task_data, device_name='', on_result=None, timeout=None, service_states={}):
+  pass
+
+@service_handle
+def microphone_capture(task_data, device_name='', on_result=None, timeout=None, service_states={}):
   pass
 
