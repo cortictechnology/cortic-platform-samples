@@ -9,3 +9,4 @@ class ServiceDataTypes(IntEnum):
     String = 4
     Boolean = 5
     List = 6
+    Json = 7

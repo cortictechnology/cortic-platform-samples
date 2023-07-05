@@ -30,13 +30,14 @@ class MobileSAM(Service):
                             "scores": ServiceDataTypes.NumpyArray,
                             "masked_image": ServiceDataTypes.CvFrame}
         self.model_path = os.path.dirname(os.path.realpath(__file__)) + "/assets/mobile_sam.pt"
+        self.max_points = 6
 
     def activate(self):
         device = "cpu"
         if torch.cuda.is_available():
             device = "cuda"
-        if torch.backends.mps.is_available():
-            device = "mps"
+        # if torch.backends.mps.is_available():
+        #     device = "mps"
         checkpoint = torch.load(self.model_path, map_location=torch.device(device))
         self.mobile_sam = setup_model()
         self.mobile_sam.load_state_dict(checkpoint,strict=True)
@@ -89,6 +90,9 @@ class MobileSAM(Service):
                 else:
                     points = self.context.get_state("points", None)
                     labels = self.context.get_state("labels", None)
+                    input_box = input_data["input_box"]
+                    if input_box.size == 0:
+                        input_box = None
                     mask_input = None
                     if input_data["use_previous_mask"]:
                         mask_input = self.context.get_state("mask_input", None)
@@ -102,10 +106,14 @@ class MobileSAM(Service):
                         labels = input_data["input_labels"]
                     else:
                         labels = np.concatenate((labels, input_data["input_labels"]), axis=0)
+                    if points.shape[0] > self.max_points:
+                        points = input_data["input_points"]
+                        labels = input_data["input_labels"]
                     masks, scores, logits = self.predictor.predict(
                         point_coords=points,
                         point_labels=labels,
                         mask_input=mask_input,
+                        box=input_box,
                         multimask_output=self.context.get_state("multimask_output", True),
                     )
                     

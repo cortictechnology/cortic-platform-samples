@@ -1,0 +1,7 @@
+opencv-python
+eos-py
+torch
+easydict
+tensorflow-macos
+pillow
+coremltools

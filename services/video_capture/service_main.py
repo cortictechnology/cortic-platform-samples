@@ -23,7 +23,6 @@ class VideoCapture(Service):
         self.output_type = {"frame": ServiceDataTypes.CvFrame}
 
     def activate(self):
-        print(self.context.states)
         self.video_file = self.context.get_state("video_file", "")
         if self.video_file == "":
             log("No video file specified", LogLevel.Error)

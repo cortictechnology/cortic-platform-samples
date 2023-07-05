@@ -54,11 +54,22 @@ def communication_func():
                                                     msg["set_states"]["app"],
                                                     msg["set_states"]["pipeline"],
                                                     msg["set_states"]["states"])
+            elif "get_states" in msg:
+                if this_service is not None:
+                    states = this_service.context.states
+                    for key in list(states.keys()):
+                        # Not supporting numpy arrays for now as they are not json serializable
+                        if isinstance(states[key], np.ndarray):
+                            del states[key]
+                    dm_conn.send("service_states", states)
             elif "reset_states" in msg:
                 if this_service is not None:
                     this_service.context._reset_states(msg["reset_states"]["hub"],
                                                         msg["reset_states"]["app"],
                                                         msg["reset_states"]["pipeline"])
+            elif "restore_states" in msg:
+                if this_service is not None:
+                    this_service.context.states = msg["restore_states"]
             elif "stop_service" in msg:
                 stop_service = True
             elif "ping" in msg:
@@ -426,6 +437,56 @@ def main(
                                         + " is not a Boolean, replaced data with None. Please check your service code.",
                                         LogLevel.Error,
                                     )
+                            elif (
+                                this_service.output_type[data_name]
+                                == ServiceDataTypes.List
+                            ):
+                                if not isinstance(result_data[data_name], list):
+                                    result_data[data_name] = None
+                                    log(
+                                        "Exception occured! Output data of "
+                                        + data_name
+                                        + " is not a List, replaced data with None. Please check your service code.",
+                                        LogLevel.Error,
+                                    )
+                                serializable = True
+                                try:
+                                    json.dumps(result_data[data_name])
+                                except:
+                                    serializable = False
+                                if not serializable:
+                                    result_data[data_name] = None
+                                    log(
+                                        "Exception occured! Output data of "
+                                        + data_name
+                                        + " is not serializable, replaced data with None. Please check your service code.",
+                                        LogLevel.Error,
+                                    )
+                            elif (
+                                this_service.output_type[data_name]
+                                == ServiceDataTypes.Json
+                            ):
+                                if not isinstance(result_data[data_name], dict):
+                                    result_data[data_name] = None
+                                    log(
+                                        "Exception occured! Output data of "
+                                        + data_name
+                                        + " is not a Dict, replaced data with None. Please check your service code.",
+                                        LogLevel.Error,
+                                    )
+                                serializable = True
+                                try:
+                                    json.dumps(result_data[data_name])
+                                except:
+                                    serializable = False
+                                if not serializable:
+                                    result_data[data_name] = None
+                                    log(
+                                        "Exception occured! Output data of "
+                                        + data_name
+                                        + " is not serializable, replaced data with None. Please check your service code.",
+                                        LogLevel.Error,
+                                    )
                         result_msg = {
                             "task_result": {
                                 "self_guid": self_guid,
@@ -434,6 +495,7 @@ def main(
                                 "pipeline": pipeline,
                                 "processing_queue_size": load,
                                 "for_pipeline": task_data["for_pipeline"],
+                                "stateful": len(this_service.context.states) > 0,
                             }
                         }
                         if len(peer_names) > 0:
@@ -446,6 +508,7 @@ def main(
                                     "processing_queue_size": load,
                                     "peer_names": peer_names,
                                     "for_pipeline": task_data["for_pipeline"],
+                                    "stateful": len(this_service.context.states) > 0,
                                 }
                             }
                         dm_conn.send(result_msg)
@@ -478,6 +541,7 @@ def main(
                                             "traceback": traceback.format_exc(),
                                         }
                                     },
+                                    "stateful": len(this_service.context.states) > 0,
                                 }
                             }
                         )
@@ -507,6 +571,56 @@ def main(
                             == ServiceDataTypes.NumpyArray
                         ):
                             result_data[data_name] = result_data[data_name].tolist()
+                        elif (
+                            this_service.output_type[data_name]
+                            == ServiceDataTypes.List
+                        ):
+                            if not isinstance(result_data[data_name], list):
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not a List, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
+                            serializable = True
+                            try:
+                                json.dumps(result_data[data_name])
+                            except:
+                                serializable = False
+                            if not serializable:
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not serializable, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
+                        elif (
+                            this_service.output_type[data_name]
+                            == ServiceDataTypes.Json
+                        ):
+                            if not isinstance(result_data[data_name], dict):
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not a Dict, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
+                            serializable = True
+                            try:
+                                json.dumps(result_data[data_name])
+                            except:
+                                serializable = False
+                            if not serializable:
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not serializable, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
                     dm_conn.send(
                         {
                             "task_result": {
@@ -516,6 +630,7 @@ def main(
                                 "pipeline": "*",
                                 "processing_queue_size": 0,
                                 "for_pipeline": True,
+                                "stateful": len(this_service.context.states) > 0,
                             }
                         }
                     )

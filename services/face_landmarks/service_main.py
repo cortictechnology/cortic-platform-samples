@@ -46,6 +46,7 @@ def process_result(rgb_image, detection_result, draw_landmarks=True):
             landmarks.append(
                 [landmark.x, landmark.y, landmark.z])
         all_face_landmarks.append(landmarks)
+
         if draw_landmarks:
             # Draw the face landmarks.
             solutions.drawing_utils.draw_landmarks(
@@ -100,8 +101,10 @@ class FaceLandmarks(Service):
         numpy_image = input_data["camera_input"]["frame"]
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
         detection_result = self.detector.detect(image)
+        draw_landmarks = self.context.get_state(
+            "draw_landmarks", input_data["draw_landmarks"])
         annotated_image, face_landmarks = process_result(
-            numpy_image, detection_result, draw_landmarks=input_data["draw_landmarks"])
+            numpy_image, detection_result, draw_landmarks=draw_landmarks)
         return {"face_landmarks": face_landmarks, "annotated_image": annotated_image}
 
     def deactivate(self):
