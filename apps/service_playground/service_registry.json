@@ -1,0 +1,37 @@
+{
+    "finger_tapping_detector": {
+        "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
+        "service_id": "9477be02-0e03-4f97-bf04-4b3fc8f48436",
+        "service_name": "Finger Tapping Detector",
+        "major_version": "0",
+        "minor_version": "1"
+    },
+    "webcam_capture": {
+        "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
+        "service_name": "Webcam Capture",
+        "major_version": "0",
+        "minor_version": "1",
+        "service_path": "/services/2d5e6c11-a400-433a-b97e-02630922cb20/webcam_capture_service"
+    },
+    "face_landmarks": {
+        "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
+        "service_name": "Face Landmarks",
+        "major_version": "0",
+        "minor_version": "1",
+        "service_path": "/services/2d5e6c11-a400-433a-b97e-02630922cb20/face_landmarks"
+    },
+    "openai_api_caller": {
+        "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
+        "service_name": "OpenAI API Caller",
+        "major_version": "0",
+        "minor_version": "1",
+        "service_path": "/services/2d5e6c11-a400-433a-b97e-02630922cb20/openai_api_caller"
+    },
+    "audio_file_capture": {
+        "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
+        "service_name": "Audio File Capture",
+        "major_version": "0",
+        "minor_version": "1",
+        "service_path": "/services/2d5e6c11-a400-433a-b97e-02630922cb20/audio_file_capture"
+    }
+}

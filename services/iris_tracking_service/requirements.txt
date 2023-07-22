@@ -1,0 +1,8 @@
+numpy==1.24.1
+opencv-python
+easydict
+coremltools
+protobuf==3.20.1
+mediapipe-silicon
+tensorflow-macos
+Pillow

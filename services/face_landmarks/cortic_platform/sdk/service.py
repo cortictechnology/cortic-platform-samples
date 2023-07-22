@@ -11,6 +11,7 @@ can be used in a Cortic AIoT (Artificial Intelligence of Things) App.
 
 from abc import abstractmethod
 
+
 class Context:
     def __init__(self, service):
         self.service = service
@@ -18,17 +19,19 @@ class Context:
         self.dm_connection = None
 
     def get_state(self, state_name, default_value=None):
-        key = self.service._current_task_source_hub + "_" + self.service._current_task_source_app + "_" + self.service._current_task_source_pipeline + "_" + state_name
+        key = self.service._current_task_source_hub + "_" + self.service._current_task_source_app + \
+            "_" + self.service._current_task_source_pipeline + "_" + state_name
         if self.service.config is not None:
             if self.service.config["is_data_source"]:
                 key = "___" + state_name
         if key not in self.states:
             return default_value
         return self.states[key]
-    
+
     def set_states(self, states: dict):
-        self._set_states(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline, states, from_self=True)
-    
+        self._set_states(self.service._current_task_source_hub, self.service._current_task_source_app,
+                         self.service._current_task_source_pipeline, states, from_self=True)
+
     def _set_states(self, hub_name, app_name, pipeline_name, states: dict, from_self=False):
         for state_name, state_value in states.items():
             key = hub_name + "_" + app_name + "_" + pipeline_name + "_" + state_name
@@ -38,20 +41,22 @@ class Context:
             self.states[key] = state_value
             if from_self:
                 if self.dm_connection is not None:
-                    self.dm_connection.send({"service_states": {"key": key, "value": state_value}})
-            
+                    self.dm_connection.send(
+                        {"service_states": {"key": key, "value": state_value}})
 
     def reset_states(self):
-        self._reset_states(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline)
-    
+        self._reset_states(self.service._current_task_source_hub,
+                           self.service._current_task_source_app, self.service._current_task_source_pipeline)
+
     def _reset_states(self, hub_name, app_name, pipeline_name):
         target_key = hub_name + "_" + app_name + "_" + pipeline_name
         if self.service.config is not None:
             if self.service.config["is_data_source"]:
-                target_key = "___" 
+                target_key = "___"
         for key in list(self.states.keys()):
             if target_key in key:
                 del self.states[key]
+
 
 class Service:
     """

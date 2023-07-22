@@ -16,5 +16,6 @@
     "is_data_source": false,
     "service_class": "FaceLandmarks",
     "processing_queue_size": 100,
-    "service_processing_fps": 30
+    "service_processing_fps": 30,
+    "service_id": "6266996b-4eed-49ed-94c9-7d0d24c8e34b"
 }

@@ -1,0 +1,14 @@
+{
+    "9477be02-0e03-4f97-bf04-4b3fc8f48436": {
+        "input": {
+            "camera_input": {
+                "frame": "ServiceDataTypes.CvFrame"
+            }
+        },
+        "output": {
+            "frame": "ServiceDataTypes.CvFrame",
+            "faces": "ServiceDataTypes.List",
+            "hand_infos": "ServiceDataTypes.List"
+        }
+    }
+}

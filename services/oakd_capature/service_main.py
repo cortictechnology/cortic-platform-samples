@@ -17,6 +17,8 @@ from video_capture import VideoCapture
 class OAKDCapture(Service):
     def __init__(self):
         super().__init__()
+        self.input_type = {"reset_video": ServiceDataTypes.Boolean,
+                           "video_file_name": ServiceDataTypes.String}
         self.output_type = {"frame": ServiceDataTypes.CvFrame,
                             "frame_width": ServiceDataTypes.Int,
                             "frame_height": ServiceDataTypes.Int,
@@ -33,42 +35,25 @@ class OAKDCapture(Service):
         log("OAKDCapture: <p style='color:blue'>Activated</p>")
 
     def process(self, input_data=None):
-        video_file = self.context.get_state("record", None)
+        video_file_name = input_data["video_file_name"]
+        if video_file_name == "":
+            video_file_name = None
         save_path = self.context.get_state("save_path", None)
         landmarks_3d = np.array([])
         frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
 
-        if self.context.get_state("reset_video", False):
+        if input_data["reset_video"]:
             self.frame_capturer.reset_video()
-            self.context.set_states({"reset_video": False})
-            return {"frame": frame,
-                    "frame_width": self.frame_width,
-                    "frame_height": self.frame_height,
-                    "camera_matrix": self.frame_capturer.camera_matrix,
-                    "camera_distortion": self.frame_capturer.camera_distortion,
-                    "landmarks_3d": landmarks_3d,
-                    }
-
-        if self.context.get_state("open_new_video", "") != "":
-            self.frame_capturer.open_new_video(
-                self.context.get_state("open_new_video", ""))
-            return {"frame": frame,
-                    "frame_width": self.frame_width,
-                    "frame_height": self.frame_height,
-                    "camera_matrix": self.frame_capturer.camera_matrix,
-                    "camera_distortion": self.frame_capturer.camera_distortion,
-                    "landmarks_3d": landmarks_3d,
-                    }
+            self.context.reset_states()
 
         action = self.context.get_state("action", "capture")
         if action == "switch_to_depth":
-            print("Restarting oakd device with depth enbabled")
             self.frame_capturer.switch_to_depth_pipeline()
-            print("Done")
         elif action == "switch_to_rgb":
-            print("Restarting oakd device in RGB mode only")
             self.frame_capturer.switch_to_rgb_pipeline()
-            print("Done")
+        elif action == "open_new_video":
+            self.frame_capturer.open_new_video(
+                self.context.get_state("open_new_video", ""))
         elif action == "depth":
             landmarks = self.context.get_state("landmarks", None)
             if landmarks is not None:
@@ -91,7 +76,7 @@ class OAKDCapture(Service):
                 ])
         elif action == "capture":
             frame = self.frame_capturer.get_frame(
-                video_file=video_file, save_path=save_path
+                video_file_name=video_file_name, save_path=save_path
             )
             if frame is None:
                 frame = np.zeros(

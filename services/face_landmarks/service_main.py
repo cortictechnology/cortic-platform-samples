@@ -11,6 +11,7 @@ from mediapipe.tasks.python import vision
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import numpy as np
+from mediapipe.python.solutions.drawing_utils import DrawingSpec
 
 # Uncomment the following lines to enable debugpy so that you can attach a debugger to the app
 # in VSCode. A vscode configuration is already provided in the .vscode folder. You will need to
@@ -22,12 +23,16 @@ import numpy as np
 
 _PRESENCE_THRESHOLD = 0.5
 _VISIBILITY_THRESHOLD = 0.5
+_THICKNESS_TESSELATION = 1
+_GREEN = (0, 153, 0)
+_GRAY = (178, 190, 181)
 
 
-def process_result(rgb_image, detection_result, draw_landmarks=True):
+def process_result(rgb_image, detection_result, draw_landmarks=True, only_draw_mesh=False):
     face_landmarks_list = detection_result.face_landmarks
     annotated_image = np.copy(rgb_image)
     all_face_landmarks = []
+    all_faces = []
 
     # Loop through the detected faces to visualize.
     for idx in range(len(face_landmarks_list)):
@@ -45,6 +50,11 @@ def process_result(rgb_image, detection_result, draw_landmarks=True):
                 continue
             landmarks.append(
                 [landmark.x, landmark.y, landmark.z])
+        np_landmarks = np.array(landmarks)
+        all_faces.append(
+            [np.min(np_landmarks[:, 0]), np.min(np_landmarks[:, 1]), np.max(np_landmarks[:, 0]),
+             np.max(np_landmarks[:, 1])]
+        )
         all_face_landmarks.append(landmarks)
 
         if draw_landmarks:
@@ -54,24 +64,25 @@ def process_result(rgb_image, detection_result, draw_landmarks=True):
                 landmark_list=face_landmarks_proto,
                 connections=mp.solutions.face_mesh.FACEMESH_TESSELATION,
                 landmark_drawing_spec=None,
-                connection_drawing_spec=mp.solutions.drawing_styles
-                .get_default_face_mesh_tesselation_style())
-            solutions.drawing_utils.draw_landmarks(
-                image=annotated_image,
-                landmark_list=face_landmarks_proto,
-                connections=mp.solutions.face_mesh.FACEMESH_CONTOURS,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=mp.solutions.drawing_styles
-                .get_default_face_mesh_contours_style())
-            solutions.drawing_utils.draw_landmarks(
-                image=annotated_image,
-                landmark_list=face_landmarks_proto,
-                connections=mp.solutions.face_mesh.FACEMESH_IRISES,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=mp.solutions.drawing_styles
-                .get_default_face_mesh_iris_connections_style())
+                connection_drawing_spec=DrawingSpec(color=_GRAY, thickness=_THICKNESS_TESSELATION))
+            if not only_draw_mesh:
+                solutions.drawing_utils.draw_landmarks(
+                    image=annotated_image,
+                    landmark_list=face_landmarks_proto,
+                    connections=mp.solutions.face_mesh.FACEMESH_CONTOURS,
+                    landmark_drawing_spec=None,
+                    connection_drawing_spec=mp.solutions.drawing_styles
+                    .get_default_face_mesh_contours_style())
 
-    return annotated_image, np.array(all_face_landmarks)
+                solutions.drawing_utils.draw_landmarks(
+                    image=annotated_image,
+                    landmark_list=face_landmarks_proto,
+                    connections=mp.solutions.face_mesh.FACEMESH_IRISES,
+                    landmark_drawing_spec=None,
+                    connection_drawing_spec=mp.solutions.drawing_styles
+                    .get_default_face_mesh_iris_connections_style())
+
+    return annotated_image, np.array(all_face_landmarks), all_faces
 
 
 class FaceLandmarks(Service):
@@ -80,7 +91,8 @@ class FaceLandmarks(Service):
         self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame},
                            "draw_landmarks": ServiceDataTypes.Boolean}
         self.output_type = {"face_landmarks": ServiceDataTypes.NumpyArray,
-                            "annotated_image": ServiceDataTypes.CvFrame}
+                            "faces": ServiceDataTypes.List,
+                            "frame": ServiceDataTypes.CvFrame}
         self.num_faces = 10
         base_options = python.BaseOptions(
             model_asset_path=os.path.dirname(os.path.realpath(__file__)) + "/assets/face_landmarker.task")
@@ -98,14 +110,18 @@ class FaceLandmarks(Service):
         pass
 
     def process(self, input_data=None):
-        numpy_image = input_data["camera_input"]["frame"]
+        numpy_image = input_data["camera_input"]["frame"].copy()
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
         detection_result = self.detector.detect(image)
         draw_landmarks = self.context.get_state(
             "draw_landmarks", input_data["draw_landmarks"])
-        annotated_image, face_landmarks = process_result(
-            numpy_image, detection_result, draw_landmarks=draw_landmarks)
-        return {"face_landmarks": face_landmarks, "annotated_image": annotated_image}
+        draw_mesh_only = self.context.get_state("draw_mesh_only", False)
+        annotated_image, face_landmarks, faces = process_result(
+            numpy_image, detection_result, draw_landmarks=draw_landmarks,
+            only_draw_mesh=draw_mesh_only)
+        return {"face_landmarks": face_landmarks,
+                "frame": annotated_image,
+                "faces": faces}
 
     def deactivate(self):
         self.detector = None

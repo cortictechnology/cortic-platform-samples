@@ -1,6 +1,7 @@
 import numpy as np
 import depthai as dai
 import time
+import threading
 
 
 class VideoCapture:
@@ -31,11 +32,24 @@ class VideoCapture:
             "h264", maxSize=60, blocking=True)
         self.video_file = None
         self.current_writting_video_name = ""
+        self.frame = np.zeros(
+            (self.frame_height, self.frame_width, 3), np.uint8)
+        self.stop = False
+        self.video_file_name = None
+        self.save_path = None
+        self.switching_pipeline = False
+        self.grab_frame_thread = threading.Thread(
+            target=self.grab_frame_func, daemon=True)
+        self.grab_frame_thread.start()
 
     def deactivate(self):
+        self.stop = True
+        self.grab_frame_thread.join()
         self.device.close()
 
     def switch_to_depth_pipeline(self):
+        self.switching_pipeline = True
+        time.sleep(0.1)
         self.device.close()
         device = dai.Device()
         self.pipeline = dai.Pipeline()
@@ -50,8 +64,12 @@ class VideoCapture:
         self.spatialCalcConfigInQueue = self.device.getInputQueue(
             "spatialCalcConfig")
         time.sleep(1)
+        self.stop = False
+        self.switching_pipeline = False
 
     def switch_to_rgb_pipeline(self):
+        self.switching_pipeline = True
+        time.sleep(0.1)
         self.device.close()
         device = dai.Device()
         self.pipeline = dai.Pipeline()
@@ -67,6 +85,8 @@ class VideoCapture:
         self.qSpatial = None
         self.spatialCalcConfigInQueue = None
         time.sleep(1)
+        self.stop = False
+        self.switching_pipeline = False
 
     def build_pipeline_without_depth(self):
         camRgb = self.pipeline.create(dai.node.ColorCamera)
@@ -148,6 +168,16 @@ class VideoCapture:
         spatialLocationCalculator.out.link(xoutSpatialData.input)
         xinSpatialCalcConfig.out.link(spatialLocationCalculator.inputConfig)
 
+    def grab_frame_func(self):
+        while not self.stop:
+            frame = None
+            if not self.switching_pipeline:
+                frame = self.qRgb.tryGet()
+            if frame is not None:
+                self.frame = frame.getCvFrame()
+            else:
+                time.sleep(0.01)
+
     def reset_video(self):
         if self.video_file is not None:
             self.video_file.close()
@@ -164,32 +194,35 @@ class VideoCapture:
             self.current_writting_video_name = video_file
         return True
 
-    def get_frame(self, video_file=None, save_path=None):
-        frame = self.qRgb.get().getCvFrame()
-        if not self.use_depth:
+    def get_frame(self, video_file_name=None, save_path=None):
+        self.video_file_name = video_file_name
+        self.save_path = save_path
+        if not self.use_depth and not self.stop:
             while self.qRgbEnc.has():
-                if video_file:
-                    base_path = "./saved_videos/"
-                    if save_path is not None:
-                        base_path = save_path
+                if self.video_file_name and self.save_path:
                     if self.video_file is None:
-                        self.video_file = open(
-                            base_path + video_file + ".h264", "w+b")
-                        self.current_writting_video_name = video_file
+                        try:
+                            self.video_file = open(
+                                self.save_path + self.video_file_name + ".h264", "w+b")
+                            self.current_writting_video_name = self.video_file_name
+                        except:
+                            print("Error opening file")
+                            self.video_file = None
+                            self.current_writting_video_name = ""
                     else:
-                        if video_file != self.current_writting_video_name:
+                        if self.video_file_name != self.current_writting_video_name:
                             self.video_file.close()
                             self.video_file = open(
-                                base_path + video_file + ".h264", "w+b"
+                                self.save_path + self.video_file_name + ".h264", "w+b"
                             )
-                            self.current_writting_video_name = video_file
+                            self.current_writting_video_name = self.video_file_name
                     if self.video_file is None:
                         self.video_file = open(
-                            base_path + video_file + ".h264", "w+b")
+                            self.save_path + self.video_file_name + ".h264", "w+b")
                     self.qRgbEnc.get().getData().tofile(self.video_file)
                 else:
                     self.qRgbEnc.get()
-        return frame
+        return self.frame
 
     def get_depth(self, rois):
         if self.use_depth:

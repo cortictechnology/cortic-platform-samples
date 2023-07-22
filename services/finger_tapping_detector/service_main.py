@@ -211,4 +211,4 @@ class FingerTappingDetector(Service):
         }
 
     def deactivate(self):
-        pass
+        log("FingerTappingDetector: <p style='color:blue'>Deactivated</p>")
