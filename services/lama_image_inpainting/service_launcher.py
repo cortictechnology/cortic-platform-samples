@@ -1,3 +1,10 @@
+""" 
+COPYRIGHT_NOTICE:
+Copyright (C) Cortic Technology Corp. - All Rights Reserved
+Written by Michael Ng <michaelng@cortic.ca>, 2022-2023
+COPYRIGHT_NOTICE
+"""
+
 import os
 import json
 import time
@@ -6,6 +13,7 @@ import service_main
 import logging
 import threading
 import traceback
+import copy
 import cv2
 import numpy as np
 import base64
@@ -21,9 +29,12 @@ real_stdout = sys.stdout
 real_stderr = sys.stderr
 
 stop_service = False
+pause_service = False
 activate_service = False
 task_queue = None
 dm_conn = None
+dm_conn_sender = None
+dm_conn_lock = threading.Lock()
 this_service = None
 sent_historical_log = False
 historical_log = ""
@@ -34,26 +45,44 @@ dm_process_last_alive_time = None
 logging.basicConfig(stream=real_stdout, level=logging.INFO)
 
 
+def task_func():
+    global dm_conn
+    global task_queue
+    while not stop_service:
+        try:
+            msg = dm_conn.recv()
+            if "task_data" in msg:
+                task_queue.append(copy.deepcopy(msg["task_data"]))
+            msg = None
+        except Exception as e:
+            log("error: " + str(traceback.format_exc()), LogLevel.Error)
+            print(msg)
+            log("Received corrupted data, throwing away..", LogLevel.Error)
+            continue
+
+
 def communication_func():
     global dm_conn
+    global dm_conn_lock
+    global dm_conn_sender
     global this_service
     global stop_service
+    global pause_service
     global activate_service
     global task_queue
     global dm_process_last_alive_time
     while not stop_service:
         try:
-            msg = dm_conn.recv()
+            msg = dm_conn_sender.recv()
+            dm_process_last_alive_time = time.time()
             if "activate" in msg:
                 activate_service = msg["activate"]
-            elif "task_data" in msg:
-                task_queue.append(msg["task_data"])
             elif "set_states" in msg:
                 if this_service is not None:
                     this_service.context._set_states(msg["set_states"]["hub"],
-                                                    msg["set_states"]["app"],
-                                                    msg["set_states"]["pipeline"],
-                                                    msg["set_states"]["states"])
+                                                     msg["set_states"]["app"],
+                                                     msg["set_states"]["pipeline"],
+                                                     msg["set_states"]["states"])
             elif "get_states" in msg:
                 if this_service is not None:
                     states = this_service.context.states
@@ -61,22 +90,33 @@ def communication_func():
                         # Not supporting numpy arrays for now as they are not json serializable
                         if isinstance(states[key], np.ndarray):
                             del states[key]
-                    dm_conn.send("service_states", states)
+                    dm_conn_lock.acquire()
+                    dm_conn_sender.send("service_states", states)
+                    dm_conn_lock.release()
             elif "reset_states" in msg:
                 if this_service is not None:
                     this_service.context._reset_states(msg["reset_states"]["hub"],
-                                                        msg["reset_states"]["app"],
-                                                        msg["reset_states"]["pipeline"])
+                                                       msg["reset_states"]["app"],
+                                                       msg["reset_states"]["pipeline"])
             elif "restore_states" in msg:
                 if this_service is not None:
                     this_service.context.states = msg["restore_states"]
             elif "stop_service" in msg:
                 stop_service = True
+            elif "pause_service" in msg:
+                pause_service = True
+            elif "resume_service" in msg:
+                pause_service = False
             elif "ping" in msg:
-                dm_process_last_alive_time = time.time()
-                dm_conn.send("pong")
-        except:
-            log("Received corrupted data, throwing away..", LogLevel.Warning)
+                dm_conn_lock.acquire()
+                dm_conn_sender.send("pong")
+                dm_conn_lock.release()
+            msg = None
+        except Exception as e:
+            log("error: " + str(traceback.format_exc()), LogLevel.Error)
+            print(msg)
+            log("Received corrupted data, throwing away..", LogLevel.Error)
+            continue
 
 
 def alive_func():
@@ -93,16 +133,22 @@ def alive_func():
 def log_callback(log):
     global this_service
     global dm_conn
+    global dm_conn_lock
+    global dm_conn_sender
     global historical_log
     global sent_historical_log
     if dm_conn is not None:
         if not sent_historical_log:
             historical_log = historical_log + log
-            dm_conn.send({"cortic_service_log": historical_log})
+            dm_conn_lock.acquire()
+            dm_conn_sender.send({"cortic_service_log": historical_log})
+            dm_conn_lock.release()
             historical_log = ""
             sent_historical_log = True
         else:
-            dm_conn.send({"cortic_service_log": log})
+            dm_conn_lock.acquire()
+            dm_conn_sender.send({"cortic_service_log": log})
+            dm_conn_lock.release()
     else:
         historical_log = historical_log + log
 
@@ -113,11 +159,16 @@ def main(
     processing_fps,
     listener_ip,
     listener_port,
+    sender_ip,
+    sender_port,
     auth_key,
 ):
     global this_service
     global dm_conn
+    global dm_conn_lock
+    global dm_conn_sender
     global stop_service
+    global pause_service
     global activate_service
     global task_queue
     global dm_process_last_alive_time
@@ -231,9 +282,15 @@ def main(
 
     address = (listener_ip, listener_port)
     dm_conn = Client(address, authkey=str.encode(auth_key))
+    task_thread = threading.Thread(target=task_func, daemon=True)
+    task_thread.start()
+    dm_conn_sender = Client((sender_ip, sender_port),
+                            authkey=str.encode(auth_key))
     dm_process_last_alive_time = time.time()
-    communication_thread = threading.Thread(target=communication_func, daemon=True)
+    communication_thread = threading.Thread(
+        target=communication_func, daemon=True)
     communication_thread.start()
+
     alive_thread = threading.Thread(target=alive_func, daemon=True)
     alive_thread.start()
     log_callback("")
@@ -242,14 +299,15 @@ def main(
         return
 
     log(service_name + " is initialized")
-
-    dm_conn.send(
+    dm_conn_lock.acquire()
+    dm_conn_sender.send(
         {
             "status": "Idle",
             "input_type": json.dumps(this_service.input_type),
             "output_type": json.dumps(this_service.output_type),
         }
     )
+    dm_conn_lock.release()
 
     while not stop_service:
         if activate_service:
@@ -258,10 +316,13 @@ def main(
                     log("Activating " + service_name + "...")
                     this_service.activate()
                     this_service.activated = True
-                    dm_conn.send({"status": "Processing"})
+                    dm_conn_lock.acquire()
+                    dm_conn_sender.send({"status": "Processing"})
+                    dm_conn_lock.release()
                 except Exception:
                     logging.error(traceback.format_exc())
-                    dm_conn.send(
+                    dm_conn_lock.acquire()
+                    dm_conn_sender.send(
                         {
                             "exception": {
                                 "type": "service",
@@ -271,6 +332,7 @@ def main(
                             }
                         }
                     )
+                    dm_conn_lock.release()
             # if len(task_queue) > 0:
             if len(task_queue) > 0:
                 task_data = task_queue.popleft()
@@ -294,30 +356,34 @@ def main(
                             if isinstance(data, dict):
                                 for data_name in data:
                                     if data_name == "peer_names":
-                                        peer_names = peer_names + data["peer_names"]
+                                        peer_names = peer_names + \
+                                            data["peer_names"]
                                     else:
-                                        if (
-                                            this_service.input_type[input_name][
-                                                data_name
-                                            ]
-                                            == ServiceDataTypes.CvFrame
-                                        ):
-                                            imgdata = base64.b64decode(data[data_name])
-                                            task_data["data"][input_name][
-                                                data_name
-                                            ] = cv2.imdecode(
-                                                np.frombuffer(imgdata, np.uint8),
-                                                flags=1,
-                                            )
-                                        elif (
-                                            this_service.input_type[input_name][
-                                                data_name
-                                            ]
-                                            == ServiceDataTypes.NumpyArray
-                                        ):
-                                            task_data["data"][input_name][
-                                                data_name
-                                            ] = np.array(data[data_name])
+                                        if data_name in this_service.input_type[input_name]:
+                                            if (
+                                                this_service.input_type[input_name][
+                                                    data_name
+                                                ]
+                                                == ServiceDataTypes.CvFrame
+                                            ):
+                                                imgdata = base64.b64decode(
+                                                    data[data_name])
+                                                task_data["data"][input_name][
+                                                    data_name
+                                                ] = cv2.imdecode(
+                                                    np.frombuffer(
+                                                        imgdata, np.uint8),
+                                                    flags=1,
+                                                )
+                                            elif (
+                                                this_service.input_type[input_name][
+                                                    data_name
+                                                ]
+                                                == ServiceDataTypes.NumpyArray
+                                            ):
+                                                task_data["data"][input_name][
+                                                    data_name
+                                                ] = np.array(data[data_name])
                             else:
                                 if (
                                     this_service.input_type[input_name]
@@ -331,7 +397,8 @@ def main(
                                     this_service.input_type[input_name]
                                     == ServiceDataTypes.NumpyArray
                                 ):
-                                    task_data["data"][input_name] = np.array(data)
+                                    task_data["data"][input_name] = np.array(
+                                        data)
                         this_service._current_task_source_hub = hub
                         this_service._current_task_source_app = app
                         this_service._current_task_source_pipeline = pipeline
@@ -341,14 +408,14 @@ def main(
                                 "Output data must be a dictionary, ignoring this data",
                                 LogLevel.Warning,
                             )
-                            return
+                            continue
                         for data_name in result_data:
                             if not isinstance(data_name, str):
                                 log(
                                     "Output data must be a dictionary with string keys, ignoring this data",
                                     LogLevel.Warning,
                                 )
-                                return
+                                continue
                             if data_name not in this_service.output_type:
                                 log(
                                     "data name: "
@@ -356,7 +423,7 @@ def main(
                                     + "not found in output type, ignoring this data",
                                     LogLevel.Warning,
                                 )
-                                return
+                                continue
                             if (
                                 this_service.output_type[data_name]
                                 == ServiceDataTypes.CvFrame
@@ -370,12 +437,14 @@ def main(
                                         LogLevel.Error,
                                     )
                                 else:
-                                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 25]
+                                    encode_param = [
+                                        int(cv2.IMWRITE_JPEG_QUALITY), 25]
                                     _, buffer = cv2.imencode(
                                         ".jpg", result_data[data_name], encode_param
                                     )
                                     imgByteArr = base64.b64encode(buffer)
-                                    result_data[data_name] = imgByteArr.decode("ascii")
+                                    result_data[data_name] = imgByteArr.decode(
+                                        "ascii")
                             elif (
                                 this_service.output_type[data_name]
                                 == ServiceDataTypes.NumpyArray
@@ -388,7 +457,8 @@ def main(
                                         + " is not a NumpyArray, replaced data with None. Please check your service code.",
                                         LogLevel.Error,
                                     )
-                                result_data[data_name] = result_data[data_name].tolist()
+                                else:
+                                    result_data[data_name] = result_data[data_name].tolist()
                             elif (
                                 this_service.output_type[data_name]
                                 == ServiceDataTypes.String
@@ -511,7 +581,9 @@ def main(
                                     "stateful": len(this_service.context.states) > 0,
                                 }
                             }
-                        dm_conn.send(result_msg)
+                        dm_conn_lock.acquire()
+                        dm_conn_sender.send(result_msg)
+                        dm_conn_lock.release()
                         # print("Send result for task:", self_guid)
                         remaining_time = 1.0 / processing_fps - (
                             time.time() - start_time
@@ -528,7 +600,8 @@ def main(
                             LogLevel.Error,
                         )
                         print(traceback.format_exc())
-                        dm_conn.send(
+                        dm_conn_lock.acquire()
+                        dm_conn_sender.send(
                             {
                                 "task_result": {
                                     "self_guid": self_guid,
@@ -545,10 +618,11 @@ def main(
                                 }
                             }
                         )
+                        dm_conn_lock.release()
 
             else:
                 if (
-                    is_data_source
+                    is_data_source and not pause_service
                 ):  # not required to receive data, service is a data source
                     start_time = time.time()
                     data = {}
@@ -560,17 +634,35 @@ def main(
                             this_service.output_type[data_name]
                             == ServiceDataTypes.CvFrame
                         ):
-                            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 25]
-                            _, buffer = cv2.imencode(
-                                ".jpg", result_data[data_name], encode_param
-                            )
-                            imgByteArr = base64.b64encode(buffer)
-                            result_data[data_name] = imgByteArr.decode("ascii")
+                            if not isinstance(result_data[data_name], np.ndarray):
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not a CvFrame, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
+                            else:
+                                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 25]
+                                _, buffer = cv2.imencode(
+                                    ".jpg", result_data[data_name], encode_param
+                                )
+                                imgByteArr = base64.b64encode(buffer)
+                                result_data[data_name] = imgByteArr.decode("ascii")
                         elif (
                             this_service.output_type[data_name]
                             == ServiceDataTypes.NumpyArray
                         ):
-                            result_data[data_name] = result_data[data_name].tolist()
+                            if not isinstance(result_data[data_name], np.ndarray):
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not a NumpyArray, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
+                            else:
+                                result_data[data_name] = result_data[data_name].tolist()
                         elif (
                             this_service.output_type[data_name]
                             == ServiceDataTypes.List
@@ -621,7 +713,8 @@ def main(
                                     + " is not serializable, replaced data with None. Please check your service code.",
                                     LogLevel.Error,
                                 )
-                    dm_conn.send(
+                    dm_conn_lock.acquire()
+                    dm_conn_sender.send(
                         {
                             "task_result": {
                                 "self_guid": "for_pipeline",
@@ -634,7 +727,9 @@ def main(
                             }
                         }
                     )
-                    remaining_time = 1.0 / processing_fps - (time.time() - start_time)
+                    dm_conn_lock.release()
+                    remaining_time = 1.0 / processing_fps - \
+                        (time.time() - start_time)
                     if remaining_time > 0:
                         time.sleep(remaining_time)
                 else:
@@ -644,7 +739,9 @@ def main(
                 log("Deactivating " + service_name + "...")
                 this_service.deactivate()
                 this_service.activated = False
-                dm_conn.send({"status": "Idle"})
+                dm_conn_lock.acquire()
+                dm_conn_sender.send({"status": "Idle"})
+                dm_conn_lock.release()
             else:
                 time.sleep(1)
     log("Stopping service")
@@ -653,7 +750,9 @@ def main(
         this_service.deactivate()
         log(service_name + " Deactivated (end)")
     log("Exiting service process loop")
-    dm_conn.send({"status": "Deactivated"})
+    dm_conn_lock.acquire()
+    dm_conn_sender.send({"status": "Deactivated"})
+    dm_conn_lock.release()
 
 
 if __name__ == "__main__":
@@ -699,6 +798,22 @@ if __name__ == "__main__":
         help="Port of device manager listener",
     )
     parser.add_argument(
+        "-ip_sender",
+        "--ip_sender",
+        action="store",
+        type=str,
+        required=True,
+        help="IP of device manager sender",
+    )
+    parser.add_argument(
+        "-port_sender",
+        "--port_sender",
+        action="store",
+        type=int,
+        required=True,
+        help="Port of device manager sender",
+    )
+    parser.add_argument(
         "-key",
         "--authkey",
         action="store",
@@ -716,5 +831,7 @@ if __name__ == "__main__":
             args.processing_fps,
             args.ip,
             args.port,
+            args.ip_sender,
+            args.port_sender,
             args.authkey,
         )

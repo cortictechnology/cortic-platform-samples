@@ -1,3 +1,10 @@
+""" 
+COPYRIGHT_NOTICE:
+Copyright (C) Cortic Technology Corp. - All Rights Reserved
+Written by Michael Ng <michaelng@cortic.ca>, 2022-2023
+COPYRIGHT_NOTICE
+"""
+
 import os
 import json
 import time
@@ -43,20 +50,19 @@ def task_func():
     global task_queue
     while not stop_service:
         try:
-            if dm_conn is not None:
-                msg = dm_conn.recv()
-                if "task_data" in msg:
-                    task_queue.append(copy.deepcopy(msg["task_data"]))
-                msg = None
-            else:
-                time.sleep(0.005)
+            msg = dm_conn.recv()
+            if "task_data" in msg:
+                task_queue.append(copy.deepcopy(msg["task_data"]))
+            msg = None
         except Exception as e:
             log("error: " + str(traceback.format_exc()), LogLevel.Error)
+            print(msg)
             log("Received corrupted data, throwing away..", LogLevel.Error)
             continue
 
 
 def communication_func():
+    global dm_conn
     global dm_conn_lock
     global dm_conn_sender
     global this_service
@@ -126,12 +132,12 @@ def alive_func():
 
 def log_callback(log):
     global this_service
-    global dm_conn_sender
+    global dm_conn
     global dm_conn_lock
     global dm_conn_sender
     global historical_log
     global sent_historical_log
-    if dm_conn_sender is not None:
+    if dm_conn is not None:
         if not sent_historical_log:
             historical_log = historical_log + log
             dm_conn_lock.acquire()
@@ -276,19 +282,17 @@ def main(
 
     address = (listener_ip, listener_port)
     dm_conn = Client(address, authkey=str.encode(auth_key))
-    dm_conn_sender = Client((sender_ip, sender_port),
-                            authkey=str.encode(auth_key))
-
     task_thread = threading.Thread(target=task_func, daemon=True)
     task_thread.start()
+    dm_conn_sender = Client((sender_ip, sender_port),
+                            authkey=str.encode(auth_key))
+    dm_process_last_alive_time = time.time()
     communication_thread = threading.Thread(
         target=communication_func, daemon=True)
     communication_thread.start()
 
-    dm_process_last_alive_time = time.time()
     alive_thread = threading.Thread(target=alive_func, daemon=True)
     alive_thread.start()
-
     log_callback("")
     # Quit after sending fatal error log
     if fatal_error:
@@ -404,14 +408,14 @@ def main(
                                 "Output data must be a dictionary, ignoring this data",
                                 LogLevel.Warning,
                             )
-                            return
+                            continue
                         for data_name in result_data:
                             if not isinstance(data_name, str):
                                 log(
                                     "Output data must be a dictionary with string keys, ignoring this data",
                                     LogLevel.Warning,
                                 )
-                                return
+                                continue
                             if data_name not in this_service.output_type:
                                 log(
                                     "data name: "
@@ -419,7 +423,7 @@ def main(
                                     + "not found in output type, ignoring this data",
                                     LogLevel.Warning,
                                 )
-                                return
+                                continue
                             if (
                                 this_service.output_type[data_name]
                                 == ServiceDataTypes.CvFrame
@@ -453,8 +457,8 @@ def main(
                                         + " is not a NumpyArray, replaced data with None. Please check your service code.",
                                         LogLevel.Error,
                                     )
-                                result_data[data_name] = result_data[data_name].tolist(
-                                )
+                                else:
+                                    result_data[data_name] = result_data[data_name].tolist()
                             elif (
                                 this_service.output_type[data_name]
                                 == ServiceDataTypes.String
@@ -630,17 +634,35 @@ def main(
                             this_service.output_type[data_name]
                             == ServiceDataTypes.CvFrame
                         ):
-                            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 25]
-                            _, buffer = cv2.imencode(
-                                ".jpg", result_data[data_name], encode_param
-                            )
-                            imgByteArr = base64.b64encode(buffer)
-                            result_data[data_name] = imgByteArr.decode("ascii")
+                            if not isinstance(result_data[data_name], np.ndarray):
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not a CvFrame, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
+                            else:
+                                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 25]
+                                _, buffer = cv2.imencode(
+                                    ".jpg", result_data[data_name], encode_param
+                                )
+                                imgByteArr = base64.b64encode(buffer)
+                                result_data[data_name] = imgByteArr.decode("ascii")
                         elif (
                             this_service.output_type[data_name]
                             == ServiceDataTypes.NumpyArray
                         ):
-                            result_data[data_name] = result_data[data_name].tolist()
+                            if not isinstance(result_data[data_name], np.ndarray):
+                                result_data[data_name] = None
+                                log(
+                                    "Exception occured! Output data of "
+                                    + data_name
+                                    + " is not a NumpyArray, replaced data with None. Please check your service code.",
+                                    LogLevel.Error,
+                                )
+                            else:
+                                result_data[data_name] = result_data[data_name].tolist()
                         elif (
                             this_service.output_type[data_name]
                             == ServiceDataTypes.List
