@@ -1,0 +1,15 @@
+name: 00d40118-56b8-4a03-9f16-b2b675381f0d_mobile_sam_0_2
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+- python==3.9
+- pip
+- numpy
+- pip:
+  - opencv-python
+  - torch
+  - torchvision
+  - timm
+  - mobile_sam @ git+https://github.com/ChaoningZhang/MobileSAM

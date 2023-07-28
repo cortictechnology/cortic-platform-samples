@@ -1,1 +1,21 @@
-{"service_name":"OAKD Capture","developer_identifier":"2d5e6c11-a400-433a-b97e-02630922cb20","description":"This service can be used to capture images from OAK-D camera","major_version":"0","minor_version":"1","platform":"*","architecture":"*","hardware_requirements":{"min_num_cpu_core":1,"min_cpu_frequency":0,"min_free_memory":0,"min_free_disk":0,"required_connected_usb_devices":[]},"is_data_source":true,"service_class":"OAKDCapture","processing_queue_size":100,"service_processing_fps":60,"service_id":"c462c69c-eebd-4b12-a01b-f6f38d64576a"}
+{
+    "service_name": "OAKD Capture",
+    "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+    "description": "This service can be used to capture images from OAK-D camera",
+    "major_version": "0",
+    "minor_version": "1",
+    "platform": "macOS, Windows, Ubuntu",
+    "architecture": "*",
+    "hardware_requirements": {
+        "min_num_cpu_core": 1,
+        "min_cpu_frequency": 0,
+        "min_free_memory": 0,
+        "min_free_disk": 0,
+        "required_connected_usb_devices": []
+    },
+    "is_data_source": true,
+    "service_class": "OAKDCapture",
+    "processing_queue_size": 100,
+    "service_processing_fps": 60,
+    "service_id": "c462c69c-eebd-4b12-a01b-f6f38d64576a"
+}

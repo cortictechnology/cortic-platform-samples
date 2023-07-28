@@ -1,11 +1,11 @@
 {
     "service_name": "Face Detection",
-    "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
-    "description": "This service detects faces in image provided as an OpenCV Mat object. It uses Google MediaPipe's short range blazeface model.",
+    "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+    "description": "This service identifies faces in images using the OpenCV Mat object and Google MediaPipe's short-range blazeface model. It provides efficient detection, suitable for a range of applications.",
     "major_version": "0",
-    "minor_version": "1",
-    "platform": "*",
-    "architecture": "*",
+    "minor_version": "2",
+    "platform": "macOS, Windows, Ubuntu",
+    "architecture": "x86_64, arm64, aarch64",
     "hardware_requirements": {
         "min_num_cpu_core": 1,
         "min_cpu_frequency": 0,
@@ -16,5 +16,6 @@
     "is_data_source": false,
     "service_class": "FaceDetection",
     "processing_queue_size": 100,
-    "service_processing_fps": 30
+    "service_processing_fps": 30,
+    "service_id": "fef9ef8f-2766-48cf-a989-54c4e4bfd3db"
 }

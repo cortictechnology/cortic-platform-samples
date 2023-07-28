@@ -1,16 +1,16 @@
 {
     "service_name": "Head Pose Estimation",
-    "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
-    "description": "This service can be used to estimate the head pose of a person in an image. The models are optimized for macOS and coreML only.",
+    "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+    "description": "This service estimates a person's head pose in an image using models optimized exclusively for macOS and coreML. It's tailored for applications running on Apple's ecosystem.",
     "major_version": "0",
     "minor_version": "1",
     "platform": "macOS",
     "architecture": "*",
     "hardware_requirements": {
         "min_num_cpu_core": 1,
-        "min_cpu_frequency": 0,
-        "min_free_memory": 0,
-        "min_free_disk": 0,
+        "min_cpu_frequency": 500,
+        "min_free_memory": 1000000000,
+        "min_free_disk": 1000000000,
         "required_connected_usb_devices": []
     },
     "is_data_source": false,

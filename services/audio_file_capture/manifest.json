@@ -1,20 +1,21 @@
 {
     "service_name": "Audio File Capture",
-    "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
-    "description": "This service reads audio data into numpy arrays from a file. It supports wav, mp3, and ogg files.",
+    "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+    "description": "This service converts audio data from wav, mp3, and ogg files into numpy arrays. Developers should set the audio_file state to the local file path and define the segment_duration state for audio chunk length, facilitating customizable audio processing for various applications.",
     "major_version": "0",
-    "minor_version": "1",
-    "platform": "*",
-    "architecture": "*",
+    "minor_version": "2",
+    "platform": "macOS, Windows, Ubuntu",
+    "architecture": "x86_64, arm64, aarch64",
     "hardware_requirements": {
         "min_num_cpu_core": 1,
-        "min_cpu_frequency": 0,
-        "min_free_memory": 0,
-        "min_free_disk": 0,
+        "min_cpu_frequency": 500,
+        "min_free_memory": 1000000000,
+        "min_free_disk": 1000000000,
         "required_connected_usb_devices": []
     },
     "is_data_source": true,
     "service_class": "AudioFileCapture",
     "processing_queue_size": 100,
-    "service_processing_fps": 1
+    "service_processing_fps": 1,
+    "service_id": "727ab0aa-8d7a-4f27-a8f1-8bc76a4ca27e"
 }

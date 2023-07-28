@@ -31,10 +31,17 @@ class VideoCapture(Service):
         log("VideoCapture: <p style='color:blue'>Activated</p>")
 
     def process(self, input_data=None):
+        self.video_file = self.context.get_state("video_file", "")
         frame =np.zeros((480, 640, 3), np.uint8)
         if self.video_file == "":
             log("No video file specified", LogLevel.Warning)
+            if self.frame_capturer is not None:
+                self.frame_capturer.release()
+                self.frame_capturer = None
             return {"frame": frame}
+        else:
+            if self.frame_capturer is None:
+                self.frame_capturer = cv2.VideoCapture(self.video_file)
         _, frame = self.frame_capturer.read()
         if frame is None:
             frame = np.zeros((self.frame_capturer.get(cv2.CAP_PROP_FRAME_HEIGHT), self.frame_capturer.get(cv2.CAP_PROP_FRAME_WIDTH), 3), np.uint8)

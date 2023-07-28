@@ -22,27 +22,37 @@ class WebcamCaptureService(Service):
         self.frame_capturer = None
         self.frame_width = 1280
         self.frame_height = 720
+        self.camera_idx = -1
         self.output_type = {"frame": ServiceDataTypes.CvFrame}
         self.stop = False
         self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
         self.grab_frame_thread = None
 
     def activate(self):
-        self.frame_capturer = cv2.VideoCapture(0)
-        self.frame_capturer.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
-        self.frame_capturer.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
-        self.stop = False
-        self.grab_frame_thread = threading.Thread(target=self.grab_frame_func, daemon=True)
-        self.grab_frame_thread.start()
-        log("WebcamCapture: <p style='color:blue'>Activated</p>")
+        self.camera_idx = self.context.get_state("camera_index", -1)
+        if self.camera_idx != -1:
+            self.frame_capturer = cv2.VideoCapture(self.camera_idx)
+            self.frame_capturer.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
+            self.frame_capturer.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
+            self.stop = False
+            self.grab_frame_thread = threading.Thread(target=self.grab_frame_func, daemon=True)
+            self.grab_frame_thread.start()
+            log("WebcamCapture: <p style='color:blue'>Activated</p>")
+        else:
+            log("WebcamCapture: <p style='color:blue'>camera_index state is not setd</p>", log_level=LogLevel.Warning)
 
     def grab_frame_func(self):
         while not self.stop:
-            _, self.frame = self.frame_capturer.read()
-            if self.frame is None:
-                self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
+            if self.camera_idx != -1:
+                _, self.frame = self.frame_capturer.read()
+                if self.frame is None:
+                    self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
+            else:
+                time.sleep(0.05)
 
     def process(self, input_data=None):
+        if self.frame_capturer is None:
+            self.activate()
         frame = self.frame.copy()
         return {"frame": frame}
 

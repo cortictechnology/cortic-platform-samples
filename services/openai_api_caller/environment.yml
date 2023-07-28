@@ -1,0 +1,11 @@
+name: 00d40118-56b8-4a03-9f16-b2b675381f0d_openai_api_call_0_2
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+- python==3.9
+- pip
+- numpy
+- pip:
+  - openai

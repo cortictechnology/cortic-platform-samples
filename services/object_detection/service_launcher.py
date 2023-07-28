@@ -127,7 +127,7 @@ def alive_func():
         if (time.time() - dm_process_last_alive_time) > 3 * alive_time_check_period:
             log("Device manager process is not alive", LogLevel.Error)
             stop_service = True
-        time.sleep(alive_time_check_period)
+        time.sleep(alive_time_check_period / 2)
 
 
 def log_callback(log):
@@ -302,7 +302,7 @@ def main(
     dm_conn_lock.acquire()
     dm_conn_sender.send(
         {
-            "status": "Idle",
+            "status": "Activated",
             "input_type": json.dumps(this_service.input_type),
             "output_type": json.dumps(this_service.output_type),
         }
@@ -317,7 +317,7 @@ def main(
                     this_service.activate()
                     this_service.activated = True
                     dm_conn_lock.acquire()
-                    dm_conn_sender.send({"status": "Processing"})
+                    dm_conn_sender.send({"status": "Idle"})
                     dm_conn_lock.release()
                 except Exception:
                     logging.error(traceback.format_exc())
@@ -740,7 +740,7 @@ def main(
                 this_service.deactivate()
                 this_service.activated = False
                 dm_conn_lock.acquire()
-                dm_conn_sender.send({"status": "Idle"})
+                dm_conn_sender.send({"status": "Activated"})
                 dm_conn_lock.release()
             else:
                 time.sleep(1)

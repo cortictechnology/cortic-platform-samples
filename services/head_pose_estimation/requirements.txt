@@ -5,3 +5,4 @@ easydict
 tensorflow-macos
 pillow
 coremltools
+click>=8.0.0

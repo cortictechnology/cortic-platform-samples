@@ -1,0 +1,12 @@
+name: 00d40118-56b8-4a03-9f16-b2b675381f0d_pose_landmarks_0_2
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+- python==3.9
+- pip
+- numpy
+- pip:
+  - opencv-python
+  - mediapipe
