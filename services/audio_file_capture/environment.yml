@@ -6,6 +6,6 @@ channels:
 dependencies:
 - python==3.9
 - pip
-- numpy
 - pip:
+  - numpy
   - pydub

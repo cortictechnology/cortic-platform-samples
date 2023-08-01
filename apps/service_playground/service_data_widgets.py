@@ -94,7 +94,6 @@ class NumpyArrayWidget(Container):
                                                border_color=app_styles.text_field_color)
         self.plot_widget = LivePlot([0, 0, rect[2], app_styles.multiple_line_input_widget_height*1.04],
                                     "value",
-                                    "data_point",
                                     data=[],
                                     min_value=0,
                                     max_value=1,

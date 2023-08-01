@@ -7,23 +7,3 @@ and guidelines to customize or extend the functionality of the framework by upda
 service_registry.json file as needed.
 """
 from cortic_platform.sdk.app_manager import service_handle
-@service_handle
-def finger_tapping_detector(task_data, device_name='', on_result=None, timeout=None, service_states={}):
-  pass
-
-@service_handle
-def webcam_capture(task_data, device_name='', on_result=None, timeout=None, service_states={}):
-  pass
-
-@service_handle
-def face_landmarks(task_data, device_name='', on_result=None, timeout=None, service_states={}):
-  pass
-
-@service_handle
-def openai_api_caller(task_data, device_name='', on_result=None, timeout=None, service_states={}):
-  pass
-
-@service_handle
-def audio_file_capture(task_data, device_name='', on_result=None, timeout=None, service_states={}):
-  pass
-

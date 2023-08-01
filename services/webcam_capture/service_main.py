@@ -44,21 +44,27 @@ class WebcamCaptureService(Service):
     def grab_frame_func(self):
         while not self.stop:
             if self.camera_idx != -1:
-                _, self.frame = self.frame_capturer.read()
-                if self.frame is None:
+                _, frame = self.frame_capturer.read()
+                if frame is None:
                     self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
+                else:
+                    self.frame = frame
             else:
                 time.sleep(0.05)
 
     def process(self, input_data=None):
         if self.frame_capturer is None:
             self.activate()
-        frame = self.frame.copy()
+        if self.frame is None:
+            frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
+        else:
+            frame = self.frame.copy()
         return {"frame": frame}
 
     def deactivate(self):
         self.stop = True
-        self.grab_frame_thread.join()
-        self.frame_capturer.release()
-        self.frame_capturer = None
+        if self.grab_frame_thread is not None:
+            self.grab_frame_thread.join()
+            self.frame_capturer.release()
+            self.frame_capturer = None
         log("WebcamCapture: Deactivated")

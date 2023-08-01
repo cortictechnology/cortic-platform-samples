@@ -33,7 +33,8 @@ class MicrophoneCaptuerService(Service):
 
     def callback(self, input_data, frame_count, time_info, flags):
         self.audio_data_lock.acquire()
-        self.audio_data = np.fromstring(input_data, dtype="float32")
+        if input_data is not None:
+            self.audio_data = np.fromstring(input_data, dtype="float32")
         self.audio_data_lock.release()
         return input_data, pyaudio.paContinue
 

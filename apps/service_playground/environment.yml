@@ -1,4 +1,4 @@
-name: 00d40118-56b8-4a03-9f16-b2b675381f0d_glpn_depth_0_2
+name: cortic_ai_development
 channels:
   - anaconda
   - conda-forge
@@ -8,9 +8,4 @@ dependencies:
 - pip
 - pip:
   - numpy
-  - transformers
-  - torch
-  - torchvision
-  - Pillow
   - opencv-python
-
