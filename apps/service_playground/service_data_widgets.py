@@ -47,13 +47,13 @@ class NumpyArrayWidget(Container):
         self.widget_tree = widget_tree
         self.data_counter = 0
 
-        self.description = Label([0, 3, 170, 20],
+        self.description = Label([0, 16, 170, 20],
                                  data="Visualize NumPy Array as: ",
                                  alignment="left",
                                  font_size=12,
                                  font_color=app_styles.font_color)
 
-        self.visualization_mode_dropdown = DropdownMenu([170, 0, 121, 25],
+        self.visualization_mode_dropdown = DropdownMenu([170, 13, 121, 25],
                                                         font_size=14,
                                                         font_color=app_styles.font_color,
                                                         data_list=self.visualization_modes)
@@ -63,7 +63,7 @@ class NumpyArrayWidget(Container):
         self.visualization_mode_dropdown.on_event = self.on_dropdown_selected
 
         if self.for_output:
-            self.raw_data_widget = Label([0, 53, rect[2], app_styles.multiple_line_input_widget_height],
+            self.raw_data_widget = Label([0, 60, rect[2], rect[3] - 60],
                                          data="",
                                          alignment="left",
                                          font_size=16,
@@ -75,7 +75,7 @@ class NumpyArrayWidget(Container):
             self.raw_data_widget.background = app_styles.text_field_color
             self.raw_data_widget.scrollable = True
         else:
-            self.raw_data_widget = TextField([0, 46, rect[2], app_styles.multiple_line_input_widget_height*1.04],
+            self.raw_data_widget = TextField([0, 60, rect[2], app_styles.multiple_line_input_widget_height*1.04],
                                              "Enter a Numpy Array in list from",
                                              "Enter a Numpy Array in list from",
                                              font_size=16,
@@ -88,11 +88,11 @@ class NumpyArrayWidget(Container):
             self.raw_data_widget.radius = 10
             self.raw_data_widget.border_color = app_styles.text_field_color
 
-        self.plot_widget_container = Container([0, 46, rect[2], app_styles.multiple_line_input_widget_height*1.04],
+        self.plot_widget_container = Container([0, 52, rect[2], rect[3] - 60],
                                                radius=10,
                                                background=app_styles.text_field_color,
                                                border_color=app_styles.text_field_color)
-        self.plot_widget = LivePlot([0, 0, rect[2], app_styles.multiple_line_input_widget_height*1.04],
+        self.plot_widget = LivePlot([0, 0, rect[2], rect[3] - 60],
                                     "value",
                                     data=[],
                                     min_value=0,
@@ -148,6 +148,10 @@ def get_data_widget(data_type, rect, data_name, widget_tree, for_output=False):
         widget = Image([0, 0, rect[2], rect[3]],
                        scaling_method="fit")
         widget.radius = 10
+        if for_output:
+            widget = Image([0, 60, 433, 285],
+                           scaling_method="fit")
+            widget.radius = 10
         return widget
     elif data_type == "NumpyArray":
         return NumpyArrayWidget([0, 0, rect[2], rect[3]], widget_tree, for_output=for_output)
@@ -166,7 +170,7 @@ def get_data_widget(data_type, rect, data_name, widget_tree, for_output=False):
         widget.radius = 8
         widget.border_color = app_styles.text_field_color
         if for_output:
-            widget = Label([0, 120, rect[2],  app_styles.single_line_input_widget_height],
+            widget = Label([0, (rect[3] - app_styles.single_line_input_widget_height)/2, rect[2],  app_styles.single_line_input_widget_height],
                            data="",
                            alignment="center",
                            font_size=16,
@@ -192,7 +196,7 @@ def get_data_widget(data_type, rect, data_name, widget_tree, for_output=False):
         widget.radius = 8
         widget.border_color = app_styles.text_field_color
         if for_output:
-            widget = Label([0, 120, rect[2],  app_styles.single_line_input_widget_height],
+            widget = Label([0, (rect[3] - app_styles.single_line_input_widget_height)/2, rect[2],  app_styles.single_line_input_widget_height],
                            data="",
                            alignment="center",
                            font_size=16,
@@ -218,7 +222,7 @@ def get_data_widget(data_type, rect, data_name, widget_tree, for_output=False):
         widget.border_color = app_styles.text_field_color
 
         if for_output:
-            widget = Label([0, 53, rect[2], app_styles.multiple_line_input_widget_height],
+            widget = Label([0, 24, rect[2], rect[3]-24],
                            data="",
                            alignment="left",
                            font_size=16,
@@ -231,7 +235,7 @@ def get_data_widget(data_type, rect, data_name, widget_tree, for_output=False):
             widget.scrollable = True
         return widget
     elif data_type == "Boolean":
-        return BooleanWidget([0, (rect[3] - 76)/2, rect[2], 86], data_name)
+        return BooleanWidget([0, (rect[3] - 86)/2, rect[2], 86], data_name)
     elif data_type == "List":
         widget = TextField([0, 46, rect[2], app_styles.multiple_line_input_widget_height*1.04],
                            "Enter a list of serializable data",
@@ -246,7 +250,7 @@ def get_data_widget(data_type, rect, data_name, widget_tree, for_output=False):
         widget.radius = 10
         widget.border_color = app_styles.text_field_color
         if for_output:
-            widget = Label([0, 53, rect[2], app_styles.multiple_line_input_widget_height],
+            widget = Label([0, 24, rect[2], rect[3]-24],
                            data="",
                            alignment="left",
                            font_size=16,
@@ -272,7 +276,7 @@ def get_data_widget(data_type, rect, data_name, widget_tree, for_output=False):
         widget.radius = 10
         widget.border_color = app_styles.text_field_color
         if for_output:
-            widget = Label([0, 53, rect[2], app_styles.multiple_line_input_widget_height],
+            widget = Label([0, 24, rect[2], rect[3]-24],
                            data="",
                            alignment="left",
                            font_size=16,

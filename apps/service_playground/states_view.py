@@ -1,4 +1,4 @@
-from cortic_platform.sdk.ui.basic_widgets import Container, Label, Icon
+from cortic_platform.sdk.ui.basic_widgets import Container, Label, Icon, VerticalSeparator
 from cortic_platform.sdk.ui.input_widgets import ListItem, ListView, Button
 from utils import *
 import app_styles
@@ -19,49 +19,72 @@ class StatesView(Container):
         self.current_service_key = None
 
         self.item_backgrounds = [
-            app_styles.item_color_1, app_styles.item_color_2]
+            app_styles.item_color_1, app_styles.item_color_3]
 
         self.listview_container = Container(
-            [38, 34, 571, 586], radius=10, background=app_styles.theme_color_content,
+            [6, 6, 572, 635], radius=10, background=app_styles.theme_color_content,
             border_color=app_styles.theme_color_content)
 
-        self.listview_title_name = Label([27, 21, 100, 20],
+        self.listview_title_bar = Container(
+            [0, 0, 572, 54], background=app_styles.list_selected_color,
+            border_color=app_styles.list_selected_color)
+        self.listview_title_bar.custom_radius = [10, 10, 0, 0]
+        self.listview_title_bar.use_custom_radius = True
+
+        self.listview_title_name = Label([31, 15, 100, 25],
                                          data="State Name",
                                          alignment="center",
+                                         font_weight="bold",
                                          font_size=12,
                                          font_color=app_styles.font_color)
 
-        self.listview_title_type = Label([199, 21, 100, 20],
+        self.listview_title_type = Label([178, 15, 100, 25],
                                          data="State Type",
                                          alignment="center",
+                                         font_weight="bold",
                                          font_size=12,
                                          font_color=app_styles.font_color)
 
-        self.listview_title_value = Label([367, 21, 100, 20],
+        self.listview_title_value = Label([316, 15, 100, 25],
                                           data="State Value",
                                           alignment="center",
+                                          font_weight="bold",
                                           font_size=12,
                                           font_color=app_styles.font_color)
 
-        self.listview_container.children += [self.listview_title_name,
-                                             self.listview_title_type, self.listview_title_value]
+        self.listview_title_bar.children += [self.listview_title_name,
+                                             self.listview_title_type,
+                                             self.listview_title_value]
 
-        self.add_state_button = Button([979, 13, 33, 33],
+        self.add_state_button = Button([514, 7, 30, 40],
                                        label="+",
                                        button_color=app_styles.theme_color_highlighted,
-                                       font_color=app_styles.font_color,
-                                       font_size=20,
+                                       font_color=app_styles.font_color_disabled,
+                                       font_size=25,
+                                       button_radius=0,
                                        on_event=self.on_add_state)
 
-        self.remove_state_button = Button([1020, 13, 33, 33],
+        self.add_state_divider = VerticalSeparator([512, 18, 1, 20],
+                                                   color=app_styles.divider_color_3,
+                                                   thickness=1)
+
+        self.remove_state_button = Button([544, 7, 30, 40],
                                           label="-",
                                           button_color=app_styles.theme_color_highlighted,
-                                          font_color=app_styles.font_color,
-                                          font_size=20,
+                                          font_color=app_styles.font_color_disabled,
+                                          font_size=25,
                                           on_event=self.on_remove_state)
 
-        self.children += [self.listview_container,
-                          self.add_state_button, self.remove_state_button]
+        self.remove_state_divider = VerticalSeparator([542, 18, 1, 20],
+                                                      color=app_styles.divider_color_3,
+                                                      thickness=1)
+
+        self.listview_container.children += [self.listview_title_bar,
+                                             self.add_state_divider,
+                                             self.add_state_button, self.remove_state_button,
+                                             self.remove_state_divider]
+
+        self.children += [self.listview_container]
 
         self.build_states()
 
@@ -90,19 +113,19 @@ class StatesView(Container):
         if self.current_service_key is not None:
             for state in self.states[self.current_service_key]:
                 background = self.item_backgrounds[counter % 2]
-                state_label = Label([0, 0, 140, 54],
+                state_label = Label([0, 0, 170, 54],
                                     font_size=13,
                                     alignment="left",
                                     font_color=app_styles.font_color,
                                     highlight_color=app_styles.font_color,
-                                    paddings=[15, 5, 0, 0],
+                                    paddings=[42, 15, 0, 0],
                                     enable_markdown=False,
                                     data=state)
                 state_label.alpha = 1
                 state_label.border_color = background
                 state_label.background = background
 
-                state_type = Label([0, 0, 156, 54],
+                state_type = Label([0, 0, 113, 54],
                                    font_size=13,
                                    alignment="center",
                                    font_color=app_styles.font_color,
@@ -113,7 +136,7 @@ class StatesView(Container):
                 state_type.border_color = background
                 state_type.background = background
 
-                state_value = Label([0, 0, 172, 54],
+                state_value = Label([0, 0, 167, 54],
                                     font_size=13,
                                     alignment="center",
                                     font_color=app_styles.font_color,
@@ -123,6 +146,17 @@ class StatesView(Container):
                 state_value.alpha = 1
                 state_value.border_color = background
                 state_value.background = background
+
+                divider = Label([0, 0, 48, 54],
+                                font_size=13,
+                                alignment="center",
+                                font_color=app_styles.font_color,
+                                highlight_color=app_styles.font_color,
+                                enable_markdown=False,
+                                data="")
+                divider.alpha = 1
+                divider.border_color = background
+                divider.background = background
 
                 edit_icon = Icon([0, 0, 40, 54],
                                  size=16,
@@ -136,15 +170,26 @@ class StatesView(Container):
                 edit_icon.border_color = background
                 edit_icon.background = background
 
+                ender = Label([0, 0, 30, 54],
+                              font_size=13,
+                              alignment="center",
+                              font_color=app_styles.font_color,
+                              highlight_color=app_styles.font_color,
+                              enable_markdown=False,
+                              data="")
+                ender.alpha = 1
+                ender.border_color = background
+                ender.background = background
+
                 self.list_items.append(
-                    ListItem([state_label, state_type,  state_value, edit_icon]))
+                    ListItem([state_label, state_type,  state_value,  divider, edit_icon, ender]))
 
                 counter += 1
 
     def build_states(self):
         self.create_state_list_items()
 
-        self.listview = ListView([30, 64, 512, self.rect[3] - 30],
+        self.listview = ListView([0, 54, 572, self.rect[3] - 54],
                                  selected_color=app_styles.button_color,
                                  item_radius=0,
                                  selectable=True,

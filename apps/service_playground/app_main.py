@@ -28,6 +28,8 @@ import app_styles
 class ServicePlayground(App):
     def __init__(self):
         super().__init__()
+        self.app_width = 1280
+        self.app_height = 720
         self.stop_scanning = False
         self.selected_view = "io"
         self.selected_service = -1
@@ -160,9 +162,9 @@ class ServicePlayground(App):
 
     def setup_header_bar(self):
         self.header_bar = Container(
-            [0, 0, 1280, 70], background=app_styles.theme_color_nvigation, border_color=app_styles.theme_color_nvigation)
+            [0, 0, self.app_width, 70], background=app_styles.theme_color_nvigation, border_color=app_styles.theme_color_nvigation)
 
-        self.content_control_bar = TabBar([215, 10, 1280-220, 50],
+        self.content_control_bar = TabBar([215, 10, self.app_width-220, 50],
                                           texts=["I/O", "States"],
                                           icons=[
                                               "stack_push", "database"],
@@ -183,7 +185,7 @@ class ServicePlayground(App):
         self.header_bar.children += [self.content_control_bar,
                                      self.run_button]
 
-        self.header_divider = HorizontalSeparator([0, 69, 1280, 1],
+        self.header_divider = HorizontalSeparator([0, 69, self.app_width, 1],
                                                   color=app_styles.divider_color,
                                                   thickness=1)
 
@@ -223,48 +225,65 @@ class ServicePlayground(App):
                 self.service_list.listview.set_selected_idx(
                     self.selected_service)
 
-    def setup_service_navigation_bar(self):
-        self.service_navigation_bar = Container(
-            [0, 70, 200, 650], background=app_styles.theme_color_nvigation, border_color=app_styles.theme_color_nvigation)
-
-        self.add_service_button = Button([60, 14, 33, 33],
+    def setup_service_button_container(self):
+        self.button_container = Container(
+            [0, self.app_height-45, 200, 45], background=app_styles.list_selected_color, border_color=app_styles.list_selected_color)
+        self.button_container.custom_radius = [0, 0, 10, 0]
+        self.button_container.use_custom_radius = True
+        self.add_service_button = Button([2, 0, 26, 45],
                                          label="+",
                                          button_color=app_styles.theme_color_highlighted,
-                                         font_color=app_styles.font_color,
-                                         font_size=20,
+                                         font_color=app_styles.font_color_disabled,
+                                         font_size=25,
+                                         button_radius=0,
                                          on_event=self.on_press_add_service)
 
-        self.remove_service_button = Button([101, 14, 33, 33],
+        self.add_button_divider = VerticalSeparator([30, 12, 1, 20],
+                                                    color=app_styles.divider_color_3,
+                                                    thickness=1)
+
+        self.remove_service_button = Button([32, 0, 26, 45],
                                             label="-",
                                             button_color=app_styles.theme_color_highlighted,
-                                            font_color=app_styles.font_color,
-                                            font_size=20,
+                                            font_color=app_styles.font_color_disabled,
+                                            font_size=25,
+                                            button_radius=0,
                                             on_event=self.on_remove_service)
 
-        self.service_navigation_bar_divider = HorizontalSeparator([14, 62, 166, 1],
-                                                                  color=app_styles.divider_color_2,
-                                                                  thickness=1)
-        self.service_navigation_bar_divider.opacity = 0.5
+        self.remove_button_divider = VerticalSeparator([60, 12, 1, 20],
+                                                       color=app_styles.divider_color_3,
+                                                       thickness=1)
+
+        self.button_container.children += [
+            self.add_service_button,
+            self.add_button_divider,
+            self.remove_service_button,
+            self.remove_button_divider]
+
+    def setup_service_navigation_bar(self):
+        self.service_navigation_bar = Container(
+            [0, 70, 200, 606], background=app_styles.theme_color_nvigation, border_color=app_styles.theme_color_nvigation)
 
         self.service_list = ServiceNavigationPanel(
-            [0, 78, 200, 650-78], service_list=self.services_in_playground, on_event=self.on_select_service)
+            [0, 0, 200, 606], service_list=self.services_in_playground, on_event=self.on_select_service)
+        self.service_list.custom_radius = [0, 0, 10, 0]
+        self.service_list.use_custom_radius = True
 
-        self.service_navigation_bar.children += [
-            self.add_service_button, self.remove_service_button, self.service_navigation_bar_divider, self.service_list]
+        self.service_navigation_bar.children += [self.service_list]
 
         self.service_navigation_divider = VerticalSeparator([199, 70, 1, 650],
                                                             color=app_styles.divider_color,
                                                             thickness=1)
 
     def setup_io_states_view(self):
-        self.io_view = IOView([200, 70, 1280-200, 720-70],
+        self.io_view = IOView([200, 70, self.app_width-200, self.app_height-70],
                               self.widget_tree,
                               background=app_styles.theme_color,
                               border_color=app_styles.theme_color)
         if self.selected_service == -1 or len(self.available_services) == 0 or self.selected_view != "io":
             self.io_view.visible = False
 
-        self.states_view = StatesView([200, 70, 1280-200, 720-70],
+        self.states_view = StatesView([200, 70, self.app_width-200, self.app_height-70],
                                       self.widget_tree,
                                       self.show_state_editor,
                                       background=app_styles.theme_color,
@@ -272,14 +291,14 @@ class ServicePlayground(App):
         self.states_view.visible = False
 
     def setup_loading_screen(self):
-        self.blank_screen = Container([0, 0, 1280, 720])
+        self.blank_screen = Container([0, 0, self.app_width, self.app_height])
         self.blank_screen.alpha = 0.7
         self.blank_screen.background = app_styles.blank_screen_color
         self.blank_screen.visible = False
         self.blank_screen.border_color = app_styles.blank_screen_color
 
         self.loader = CircularLoader(
-            [(1280 - 60)/2, (720-60)/2, 60, 60], color=app_styles.font_color)
+            [(self.app_width - 60)/2, (self.app_height-60)/2, 60, 60], color=app_styles.font_color)
         self.loader.visible = False
 
     def setup_popups(self):
@@ -326,26 +345,28 @@ class ServicePlayground(App):
             self.selected_service_key, state, state_type)
 
     def setup(self):
-        self.background_container = Container([0, 0, 1280, 720])
+        self.background_container = Container(
+            [0, 0, self.app_width, self.app_height])
         self.background_container.alpha = 1
         self.background_container.background = app_styles.theme_color
         self.background_container.use_custom_radius = True
         self.background_container.custom_radius = [0, 0, 10, 10]
 
-        self.default_message = Label([200, 70, 1280-200, 720-70], data="No service selected",
+        self.default_message = Label([200, 70, self.app_width-200, self.app_height-70], data="No service selected",
                                      alignment="center", font_size=20, font_color=app_styles.font_color_disabled)
 
         self.setup_header_bar()
         self.setup_service_navigation_bar()
+        self.setup_service_button_container()
         self.setup_io_states_view()
         self.setup_loading_screen()
         self.setup_popups()
 
         self.background_container.children += [
             self.header_bar, self.header_divider, self.service_navigation_bar,
-            self.service_navigation_divider, self.default_message, self.io_view,
-            self.states_view, self.blank_screen, self.loader, self.add_service_dialog,
-            self.state_editor]
+            self.button_container, self.service_navigation_divider, self.default_message,
+            self.io_view, self.states_view, self.blank_screen, self.loader,
+            self.add_service_dialog, self.state_editor]
 
         self.widget_tree.add(self.background_container)
         self.widget_tree.build()

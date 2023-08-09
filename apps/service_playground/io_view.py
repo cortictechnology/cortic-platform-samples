@@ -184,7 +184,7 @@ class IOView(Container):
                                                  color=app_styles.divider_color_2, thickness=1)
 
         self.output_field_container = Container(
-            [24, 83, 433, 285])
+            [24, 23, 433, 582-20-40-24])
         self.output_field_container.background = self.output_container.background
         self.output_field_container.border_color = self.output_container.border_color
 
@@ -294,6 +294,7 @@ class IOView(Container):
         else:
             for service_input in self.current_input_widgets:
                 self.current_input_data[service_input] = self.current_input_widgets[service_input].data
+        self.input_type_bar.selected_idx = -1
         self.current_input_widgets = {}
         self.current_input_name = None
         self.current_input_widget = None
@@ -347,9 +348,11 @@ class IOView(Container):
         if on_selected_service:
             self.current_output_data = {}
             self.current_output_data_numpy = {}
+
         else:
             for service_output in self.current_output_widgets:
                 self.current_output_data[service_output] = self.current_output_widgets[service_output].data
+        self.output_type_bar.selected_idx = -1
         self.current_output_widgets = {}
         self.current_output_name = None
         self.current_output_widget = None
