@@ -125,6 +125,6 @@ def decode_output(data_type, data):
     elif data_type == "Json":
         return json.dumps(data)
     elif data_type == "List":
-        return str(data)
+        return data
     else:
         return data

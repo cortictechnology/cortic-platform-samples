@@ -441,6 +441,9 @@ class ServicePlayground(App):
                 if data_type == "NumpyArray":
                     self.io_view.current_output_widgets[output_name].set_data(
                         data)
+                elif data_type == "List":
+                    self.io_view.current_output_widgets[output_name].set_data(
+                        data, self.io_view.current_input_data_numpy, self.io_view.current_input_name)
                 else:
                     self.io_view.current_output_widgets[output_name].data = data
 
