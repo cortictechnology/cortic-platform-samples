@@ -1,1 +1,21 @@
-{"service_name":"Pose Landmarks","developer_identifier":"00d40118-56b8-4a03-9f16-b2b675381f0d","description":"This service identifies human full body pose landmarks in images using the OpenCV Mat object, leveraging Google MediaPipe's Pose Landmarker solution. It offers fast and relatively accurate pose detection, suitable for a variety of applications analyzing body movements.","major_version":"0","minor_version":"2","platform":"macOS, Windows, Ubuntu","architecture":"x86_64, arm64, aarch64","hardware_requirements":{"min_num_cpu_core":1,"min_cpu_frequency":500,"min_free_memory":1000000000,"min_free_disk":1000000000,"required_connected_usb_devices":[]},"is_data_source":false,"service_class":"PoseLandmarks","processing_queue_size":100,"service_processing_fps":30,"service_id":"5b39e8b4-c9ca-4aa0-8209-baa379f08a22"}
+{
+    "service_name": "Pose Landmarks",
+    "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+    "description": "This service identifies human full body pose landmarks in images using the OpenCV Mat object, leveraging Google MediaPipe's Pose Landmarker solution. It offers fast and relatively accurate pose detection, suitable for a variety of applications analyzing body movements.",
+    "major_version": "0",
+    "minor_version": "2",
+    "platform": "macOS, Windows, Ubuntu",
+    "architecture": "x86_64, arm64, aarch64",
+    "hardware_requirements": {
+        "min_num_cpu_core": 1,
+        "min_cpu_frequency": 500,
+        "min_free_memory": 1000000000,
+        "min_free_disk": 1000000000,
+        "required_connected_usb_devices": []
+    },
+    "is_data_source": false,
+    "service_class": "PoseLandmarks",
+    "processing_queue_size": 100,
+    "service_processing_fps": 30,
+    "service_id": "5b39e8b4-c9ca-4aa0-8209-baa379f08a22"
+}

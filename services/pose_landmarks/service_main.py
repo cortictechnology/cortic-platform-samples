@@ -24,18 +24,18 @@ import numpy as np
 _PRESENCE_THRESHOLD = 0.5
 _VISIBILITY_THRESHOLD = 0.5
 
-def process_result(rgb_image, detection_result, draw_landmarks=True):
+
+def process_result(rgb_image, detection_result):
     pose_landmarks_list = detection_result.pose_landmarks
-    annotated_image = np.copy(rgb_image)
     all_pose_landmarks = []
 
     # Loop through the detected poses to visualize.
     for idx in range(len(pose_landmarks_list)):
         pose_landmarks = pose_landmarks_list[idx]
-        
+
         pose_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
         pose_landmarks_proto.landmark.extend([
-        landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) for landmark in pose_landmarks
+            landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) for landmark in pose_landmarks
         ])
 
         landmarks = []
@@ -49,26 +49,27 @@ def process_result(rgb_image, detection_result, draw_landmarks=True):
                 [landmark.x, landmark.y, landmark.z])
         all_pose_landmarks.append(landmarks)
 
-        if draw_landmarks:
-            # Draw the pose landmarks.
-            solutions.drawing_utils.draw_landmarks(
-            annotated_image,
-            pose_landmarks_proto,
-            solutions.pose.POSE_CONNECTIONS,
-            solutions.drawing_styles.get_default_pose_landmarks_style())
+        # if draw_landmarks:
+        #     # Draw the pose landmarks.
+        #     solutions.drawing_utils.draw_landmarks(
+        #     annotated_image,
+        #     pose_landmarks_proto,
+        #     solutions.pose.POSE_CONNECTIONS,
+        #     solutions.drawing_styles.get_default_pose_landmarks_style())
 
-    return annotated_image, np.array(all_pose_landmarks)
+    return all_pose_landmarks
+
 
 class PoseLandmarks(Service):
     def __init__(self):
         super().__init__()
-        self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame},
-                           "draw_landmarks": ServiceDataTypes.Boolean}
-        self.output_type = {"pose_landmarks": ServiceDataTypes.NumpyArray,
-                            "annotated_image": ServiceDataTypes.CvFrame}
-        
-        base_options = python.BaseOptions(model_asset_path=os.path.dirname(os.path.realpath(__file__)) + "/assets/pose_landmarker_lite.task")
-        self.options = vision.PoseLandmarkerOptions(base_options=base_options, output_segmentation_masks=True)
+        self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame}}
+        self.output_type = {"pose_landmarks": ServiceDataTypes.List}
+
+        base_options = python.BaseOptions(model_asset_path=os.path.dirname(
+            os.path.realpath(__file__)) + "/assets/pose_landmarker_lite.task")
+        self.options = vision.PoseLandmarkerOptions(
+            base_options=base_options, output_segmentation_masks=True)
         self.detector = None
 
     def activate(self):
@@ -82,9 +83,9 @@ class PoseLandmarks(Service):
         numpy_image = input_data["camera_input"]["frame"]
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
         detection_result = self.detector.detect(image)
-        annotated_image, pose_landmarks = process_result(
-            numpy_image, detection_result, draw_landmarks=input_data["draw_landmarks"])
-        return {"pose_landmarks": pose_landmarks, "annotated_image": annotated_image}
+        pose_landmarks = process_result(
+            numpy_image, detection_result)
+        return {"pose_landmarks": pose_landmarks}
 
     def deactivate(self):
         self.detector = None

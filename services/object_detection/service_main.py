@@ -25,7 +25,7 @@ FONT_THICKNESS = 2
 TEXT_COLOR = (255, 255, 255)  # red
 
 
-def process_result(image, detection_result, draw_detection=True):
+def process_result(image, detection_result):
     """Draws bounding boxes on the input image and return it.
     Args:
       image: The input RGB image.
@@ -33,41 +33,56 @@ def process_result(image, detection_result, draw_detection=True):
     Returns:
       Image with bounding boxes.
     """
-    annotated_image = image.copy()
+    # annotated_image = image.copy()
+    image_width = image.shape[1]
+    image_height = image.shape[0]
     detected_objects = []
 
     for detection in detection_result.detections:
         bbox = detection.bounding_box
-        start_point = bbox.origin_x, bbox.origin_y
-        end_point = bbox.origin_x + bbox.width, bbox.origin_y + bbox.height
-        if draw_detection:
-            cv2.rectangle(annotated_image, start_point,
-                          end_point, TEXT_COLOR, 3)
+        x1 = float(bbox.origin_x / image_width)
+        y1 = float(bbox.origin_y / image_height)
+        x2 = float((bbox.origin_x + bbox.width) / image_width)
+        y2 = float((bbox.origin_y + bbox.height) / image_height)
+
+        if x1 < 0:
+            x1 = 0
+        if y1 < 0:
+            y1 = 0
+        if x2 > 1:
+            x2 = 1
+        if y2 > 1:
+            y2 = 1
+        # start_point = bbox.origin_x, bbox.origin_y
+        # end_point = bbox.origin_x + bbox.width, bbox.origin_y + bbox.height
+        # if draw_detection:
+        #     cv2.rectangle(annotated_image, start_point,
+        #                   end_point, TEXT_COLOR, 3)
 
         category = detection.categories[0]
         category_name = category.category_name
         probability = round(category.score, 2)
 
         detected_objects.append(
-            {'category': category_name, 'probability': probability, 'bbox': [bbox.origin_x, bbox.origin_y, bbox.origin_x + bbox.width, bbox.origin_y + bbox.height]})
+            {'category': category_name,
+             'probability': probability,
+             'bbox': [x1, y1, x2, y2]})
 
-        if draw_detection:
-            result_text = category_name + ' (' + str(probability) + ')'
-            text_location = (MARGIN + bbox.origin_x,
-                             MARGIN + ROW_SIZE + bbox.origin_y)
-            cv2.putText(annotated_image, result_text, text_location, cv2.FONT_HERSHEY_PLAIN,
-                        FONT_SIZE, TEXT_COLOR, FONT_THICKNESS)
+        # if draw_detection:
+        #     result_text = category_name + ' (' + str(probability) + ')'
+        #     text_location = (MARGIN + bbox.origin_x,
+        #                      MARGIN + ROW_SIZE + bbox.origin_y)
+        #     cv2.putText(annotated_image, result_text, text_location, cv2.FONT_HERSHEY_PLAIN,
+        #                 FONT_SIZE, TEXT_COLOR, FONT_THICKNESS)
 
-    return annotated_image, detected_objects
+    return detected_objects
 
 
 class ObjectDetection(Service):
     def __init__(self):
         super().__init__()
-        self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame},
-                           "draw_objects": ServiceDataTypes.Boolean}
-        self.output_type = {"detected_objects": ServiceDataTypes.List,
-                            "annotated_image": ServiceDataTypes.CvFrame}
+        self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame}}
+        self.output_type = {"detected_objects": ServiceDataTypes.List}
         self.threshold = 0.5
         base_options = python.BaseOptions(model_asset_path=os.path.dirname(
             os.path.realpath(__file__)) + "/assets/efficientdet_lite0.tflite")
@@ -86,10 +101,9 @@ class ObjectDetection(Service):
         numpy_image = input_data["camera_input"]["frame"]
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
         detection_result = self.detector.detect(image)
-        annotated_image, detected_objects = process_result(
-            numpy_image, detection_result, input_data["draw_objects"])
-        return {"detected_objects": detected_objects,
-                "annotated_image": annotated_image}
+        detected_objects = process_result(
+            numpy_image, detection_result)
+        return {"detected_objects": detected_objects}
 
     def deactivate(self):
         self.detector = None

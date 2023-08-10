@@ -41,59 +41,40 @@ def _normalized_to_pixel_coordinates(normalized_x, normalized_y, image_width, im
     y_px = min(math.floor(normalized_y * image_height), image_height - 1)
     return x_px, y_px
 
-def process_result(image,detection_result, draw_faces=True):
-    """Draws bounding boxes and keypoints on the input image and return it.
-    Args:
-        image: The input RGB image.
-        detection_result: The list of all "Detection" entities to be visualize.
-        draw_faces: Whether to draw bounding boxes and keypoints on the input image.
-    Returns:
-        annotated_image: The image with bounding boxes and keypoints drawn on it.
-        detected_faces: The list of detected faces.
-        detected_face_keypoints: The list of detected face keypoints.
-    """
-    annotated_image = image.copy()
+def process_result(image,detection_result):
     height, width, _ = image.shape
     detected_faces = []
     detected_face_keypoints = []
 
     for detection in detection_result.detections:
         bbox = detection.bounding_box
-        start_point = bbox.origin_x, bbox.origin_y
-        end_point = bbox.origin_x + bbox.width, bbox.origin_y + bbox.height
-        detected_faces.append([bbox.origin_x, bbox.origin_y, bbox.origin_x + bbox.width, bbox.origin_y + bbox.height])
-        if draw_faces:
-            cv2.rectangle(annotated_image, start_point, end_point, TEXT_COLOR, 3)
-
+        x1 = float(bbox.origin_x/width)
+        y1 = float(bbox.origin_y/height)
+        x2 = float((bbox.origin_x + bbox.width)/width)
+        y2 = float((bbox.origin_y + bbox.height)/height)
+        if x1 < 0:
+            x1 = 0
+        if y1 < 0:
+            y1 = 0
+        if x2 > 1:
+            x2 = 1
+        if y2 > 1:
+            y2 = 1
+        detected_faces.append([x1, y1, x2, y2])
+        
         for keypoint in detection.keypoints:
-            keypoint_px = _normalized_to_pixel_coordinates(keypoint.x, keypoint.y,
-                                                        width, height)
-            detected_face_keypoints.append([keypoint_px[0], keypoint_px[1]])
-            color, thickness, radius = (0, 255, 0), 2, 2
-            if draw_faces:
-                cv2.circle(annotated_image, keypoint_px, thickness, color, radius)
-    
-        if draw_faces:
-            category = detection.categories[0]
-            category_name = category.category_name
-            category_name = '' if category_name is None else category_name
-            probability = round(category.score, 2)
-            result_text = category_name + ' (' + str(probability) + ')'
-            text_location = (MARGIN + bbox.origin_x,
-                            MARGIN + ROW_SIZE + bbox.origin_y)
-            cv2.putText(annotated_image, result_text, text_location, cv2.FONT_HERSHEY_PLAIN,
-                        FONT_SIZE, TEXT_COLOR, FONT_THICKNESS)
+            # keypoint_px = _normalized_to_pixel_coordinates(keypoint.x, keypoint.y,
+                                                        # width, height)
+            detected_face_keypoints.append([keypoint.x, keypoint.y])
 
-    return annotated_image, np.array(detected_faces), np.array(detected_face_keypoints)
+    return detected_faces, detected_face_keypoints
 
 class FaceDetection(Service):
     def __init__(self):
         super().__init__()
-        self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame}, 
-                           "draw_faces": ServiceDataTypes.Boolean}
-        self.output_type = {"detected_faces": ServiceDataTypes.NumpyArray, 
-                            "detected_face_keypoints": ServiceDataTypes.NumpyArray, 
-                            "annotated_image": ServiceDataTypes.CvFrame}
+        self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame}}
+        self.output_type = {"detected_faces": ServiceDataTypes.List, 
+                            "detected_face_keypoints": ServiceDataTypes.List}
         base_options = python.BaseOptions(model_asset_path=os.path.dirname(os.path.realpath(__file__)) + "/assets/face_detector.tflite")
         self.options = vision.FaceDetectorOptions(base_options=base_options)
         self.detector = None
@@ -109,10 +90,9 @@ class FaceDetection(Service):
         numpy_image = input_data["camera_input"]["frame"]
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
         detection_result = self.detector.detect(image)
-        annotated_image, detected_faces, detected_face_keypoints = process_result(numpy_image, detection_result, input_data["draw_faces"])
+        detected_faces, detected_face_keypoints = process_result(numpy_image, detection_result)
         return {"detected_faces": detected_faces, 
-                "detected_face_keypoints": detected_face_keypoints,
-                "annotated_image": annotated_image}
+                "detected_face_keypoints": detected_face_keypoints}
 
     def deactivate(self):
         self.detector = None
