@@ -5,9 +5,6 @@ from cortic_platform.sdk.service import Service
 from cortic_platform.sdk.logging import log, LogLevel
 from cortic_platform.sdk.service_data_types import ServiceDataTypes
 import os
-import math
-import cv2
-import numpy as np
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -25,21 +22,6 @@ ROW_SIZE = 10  # pixels
 FONT_SIZE = 1
 FONT_THICKNESS = 1
 TEXT_COLOR = (255, 0, 0)  # red
-
-def _normalized_to_pixel_coordinates(normalized_x, normalized_y, image_width, image_height):
-    """Converts normalized value pair to pixel coordinates."""
-    
-    # Checks if the float value is between 0 and 1.
-    def is_valid_normalized_value(value: float) -> bool:
-        return (value > 0 or math.isclose(0, value)) and (value < 1 or
-                                                        math.isclose(1, value))
-
-    if not (is_valid_normalized_value(normalized_x) and
-            is_valid_normalized_value(normalized_y)):
-        return None
-    x_px = min(math.floor(normalized_x * image_width), image_width - 1)
-    y_px = min(math.floor(normalized_y * image_height), image_height - 1)
-    return x_px, y_px
 
 def process_result(image,detection_result):
     height, width, _ = image.shape
@@ -63,8 +45,6 @@ def process_result(image,detection_result):
         detected_faces.append([x1, y1, x2, y2])
         
         for keypoint in detection.keypoints:
-            # keypoint_px = _normalized_to_pixel_coordinates(keypoint.x, keypoint.y,
-                                                        # width, height)
             detected_face_keypoints.append([keypoint.x, keypoint.y])
 
     return detected_faces, detected_face_keypoints

@@ -1,1 +1,21 @@
-{"service_name":"Face Landmarks","developer_identifier":"00d40118-56b8-4a03-9f16-b2b675381f0d","description":"This service detects human face landmarks in images using the OpenCV Mat object with Google MediaPipe's Face Landmarker solution.","major_version":"0","minor_version":"2","platform":"macOS, Windows, Ubuntu","architecture":"x86_64, arm64, aarch64","hardware_requirements":{"min_num_cpu_core":1,"min_cpu_frequency":500,"min_free_memory":1000000000,"min_free_disk":1000000000,"required_connected_usb_devices":[]},"is_data_source":false,"service_class":"FaceLandmarks","processing_queue_size":100,"service_processing_fps":30,"service_id":"0884a7c4-3e32-4cc3-81a3-82cf3f9d1981"}
+{
+    "service_name": "Face Landmarks",
+    "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+    "description": "This service detects human face landmarks in images using the OpenCV Mat object with Google MediaPipe's Face Landmarker solution.",
+    "major_version": "0",
+    "minor_version": "2",
+    "platform": "macOS, Windows, Ubuntu",
+    "architecture": "x86_64, arm64, aarch64",
+    "hardware_requirements": {
+        "min_num_cpu_core": 1,
+        "min_cpu_frequency": 500,
+        "min_free_memory": 1000000000,
+        "min_free_disk": 1000000000,
+        "required_connected_usb_devices": []
+    },
+    "is_data_source": false,
+    "service_class": "FaceLandmarks",
+    "processing_queue_size": 100,
+    "service_processing_fps": 30,
+    "service_id": "0884a7c4-3e32-4cc3-81a3-82cf3f9d1981"
+}
