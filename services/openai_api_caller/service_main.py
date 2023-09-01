@@ -19,6 +19,7 @@ class OpenAIAPICaller(Service):
                            "openai_api_key": ServiceDataTypes.String}
         self.output_type = {"response": ServiceDataTypes.String}
         self.default_model = "gpt-3.5-turbo"
+        self.context.create_state("openai_model", self.default_model)
 
     def activate(self):
         log("OpenAIAPICaller: <p style='color:blue'>Activated</p>")
@@ -27,7 +28,10 @@ class OpenAIAPICaller(Service):
         openai.api_key = input_data["openai_api_key"]
         if openai.api_key is None or openai.api_key == "":
             return {"response": "OpenAI API key not set. Please set it in the service settings."}
-        model = self.context.get_state("openai_model", self.default_model)
+        model = self.default_model
+        model_state = self.context.get_state("openai_model")
+        if model_state is not None:
+            model = model_state["openai_model"]
         completion = openai.ChatCompletion.create(model=model, messages=[{"role": "user", "content": input_data["text_input"]["message"]}])
         # print("Response: " + completion.choices[0].message.content)
         return {"response": completion.choices[0].message.content}

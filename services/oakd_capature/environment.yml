@@ -1,0 +1,12 @@
+name: 2d5e6c11-a400-433a-b97e-02630922cb20_oakd_capture_0_1
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+- python==3.9
+- pip
+- pip:
+  - numpy
+  - opencv-python >= 4.5.1.48
+  - depthai

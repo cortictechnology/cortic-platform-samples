@@ -3,7 +3,7 @@
     "name": "Service Playground",
     "description": "This app is used to try out the different services that are available in the Cortic AI Platform Store. Users can simply import a Service from the Store and try it out with their own data.",
     "major_version": "0",
-    "minor_version": "1",
+    "minor_version": "5",
     "conda_env_name": "cortic_ai_development",
     "entry_point": "ServicePlayground",
     "max_fps": 30,

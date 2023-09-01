@@ -25,25 +25,26 @@ class WebcamCaptureService(Service):
         self.camera_idx = -1
         self.output_type = {"frame": ServiceDataTypes.CvFrame}
         self.stop = False
+        self.context.create_state("camera_index", 0)
         self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
         self.grab_frame_thread = None
 
     def activate(self):
-        self.camera_idx = self.context.get_state("camera_index", -1)
-        if self.camera_idx != -1:
-            self.frame_capturer = cv2.VideoCapture(self.camera_idx)
-            self.frame_capturer.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
-            self.frame_capturer.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
-            self.stop = False
-            self.grab_frame_thread = threading.Thread(target=self.grab_frame_func, daemon=True)
-            self.grab_frame_thread.start()
-            log("WebcamCapture: <p style='color:blue'>Activated</p>")
-        else:
-            log("WebcamCapture: <p style='color:blue'>camera_index state is not setd</p>", log_level=LogLevel.Warning)
+        camera_idx_state = self.context.get_state("camera_index")
+        if camera_idx_state is not None:
+            self.camera_idx = camera_idx_state["camera_index"]
+            if self.camera_idx >= 0:
+                self.frame_capturer = cv2.VideoCapture(self.camera_idx)
+                self.frame_capturer.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
+                self.frame_capturer.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
+                self.stop = False
+                self.grab_frame_thread = threading.Thread(target=self.grab_frame_func, daemon=True)
+                self.grab_frame_thread.start()
+                log("WebcamCapture: <p style='color:blue'>Activated</p>")
 
     def grab_frame_func(self):
         while not self.stop:
-            if self.camera_idx != -1:
+            if self.camera_idx >= 0:
                 _, frame = self.frame_capturer.read()
                 if frame is None:
                     self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)

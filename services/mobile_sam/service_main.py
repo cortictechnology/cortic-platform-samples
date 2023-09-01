@@ -31,6 +31,11 @@ class MobileSAM(Service):
                             "masked_image": ServiceDataTypes.CvFrame}
         self.model_path = os.path.dirname(os.path.realpath(__file__)) + "/assets/mobile_sam.pt"
         self.max_points = 6
+        self.context.create_state("image", None)
+        self.context.create_state("points", None)
+        self.context.create_state("labels", None)
+        self.context.create_state("mask_input", None)
+        self.context.create_state("multimask_output", True)
 
     def activate(self):
         device = "cpu"
@@ -66,10 +71,13 @@ class MobileSAM(Service):
         return masked_image
 
     def process(self, input_data=None):
-        current_image = self.context.get_state("image", None)
+        current_image = None
+        current_image_state = self.context.get_state("image")
+        if current_image_state is not None:
+            current_image = current_image_state["image"]
         if current_image is None:
             self.predictor.set_image(input_data["image"])
-            self.context.set_states({"image": input_data["image"]})
+            self.context.set_state("image", input_data["image"])
         if input_data["input_points"].size == 0 and input_data["input_box"].size == 0:
             return {"masks": [], "scores": [], "masked_image": input_data["image"]}
         else:
@@ -82,20 +90,29 @@ class MobileSAM(Service):
                     multimask_output=False,
                 )
                 masked_image = self.draw_mask(input_data["image"], masks[0], box=input_data["input_box"])
-                self.context.set_states({"mask_input": logits[0, :, :]})
+                self.context.set_state("mask_input", logits[0, :, :])
                 return {"masks": masks, "scores": scores, "masked_image": masked_image}
             if input_data["input_points"].size != 0:
                 if input_data["input_labels"].size == 0:
                     return {"masks": [], "scores": [], "masked_image": input_data["image"]}
                 else:
-                    points = self.context.get_state("points", None)
-                    labels = self.context.get_state("labels", None)
+                    points = None
+                    points_state = self.context.get_state("points")
+                    if points_state is not None:
+                        points = points_state["points"]
+                    labels = None
+                    labels_state = self.context.get_state("labels")
+                    if labels_state is not None:
+                        labels = labels_state["labels"]
                     input_box = input_data["input_box"]
                     if input_box.size == 0:
                         input_box = None
                     mask_input = None
                     if input_data["use_previous_mask"]:
-                        mask_input = self.context.get_state("mask_input", None)
+                        mask_input = None
+                        mask_input_state = self.context.get_state("mask_input")
+                        if mask_input_state is not None:
+                            mask_input = mask_input_state["mask_input"]
                         if mask_input is not None:
                             mask_input = mask_input[None, :, :]
                     if points is None:
@@ -109,18 +126,22 @@ class MobileSAM(Service):
                     if points.shape[0] > self.max_points:
                         points = input_data["input_points"]
                         labels = input_data["input_labels"]
+                    multimask_output = True
+                    multimask_output_state = self.context.get_state("multimask_output")
+                    if multimask_output_state is not None:
+                        multimask_output = multimask_output_state["multimask_output"]
                     masks, scores, logits = self.predictor.predict(
                         point_coords=points,
                         point_labels=labels,
                         mask_input=mask_input,
                         box=input_box,
-                        multimask_output=self.context.get_state("multimask_output", True),
+                        multimask_output=multimask_output,
                     )
                     
                     masked_image = self.draw_mask(input_data["image"], masks[np.argmax(scores)], points=points, labels=labels)
-                    self.context.set_states({"mask_input": logits[np.argmax(scores), :, :]})
-                    self.context.set_states({"points": points})
-                    self.context.set_states({"labels": labels})
+                    self.context.set_state("mask_input", logits[np.argmax(scores), :, :])
+                    self.context.set_state("points", points)
+                    self.context.set_state("labels", labels)
                     return {"masks": masks, "scores": scores, "masked_image": masked_image}
 
     def deactivate(self):

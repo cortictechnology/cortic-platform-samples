@@ -56,31 +56,6 @@ def process_result(rgb_image, detection_result):
         )
         all_face_landmarks.append(landmarks)
 
-        # if draw_landmarks:
-        #     # Draw the face landmarks.
-        #     solutions.drawing_utils.draw_landmarks(
-        #         image=annotated_image,
-        #         landmark_list=face_landmarks_proto,
-        #         connections=mp.solutions.face_mesh.FACEMESH_TESSELATION,
-        #         landmark_drawing_spec=None,
-        #         connection_drawing_spec=DrawingSpec(color=_GRAY, thickness=_THICKNESS_TESSELATION))
-        #     if not only_draw_mesh:
-        #         solutions.drawing_utils.draw_landmarks(
-        #             image=annotated_image,
-        #             landmark_list=face_landmarks_proto,
-        #             connections=mp.solutions.face_mesh.FACEMESH_CONTOURS,
-        #             landmark_drawing_spec=None,
-        #             connection_drawing_spec=mp.solutions.drawing_styles
-        #             .get_default_face_mesh_contours_style())
-
-        #         solutions.drawing_utils.draw_landmarks(
-        #             image=annotated_image,
-        #             landmark_list=face_landmarks_proto,
-        #             connections=mp.solutions.face_mesh.FACEMESH_IRISES,
-        #             landmark_drawing_spec=None,
-        #             connection_drawing_spec=mp.solutions.drawing_styles
-        #             .get_default_face_mesh_iris_connections_style())
-
     return all_face_landmarks, all_faces
 
 

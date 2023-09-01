@@ -30,6 +30,7 @@ class MicrophoneCaptuerService(Service):
         self.output_type = {"audio_frame": ServiceDataTypes.NumpyArray, 
                             "sample_rate": ServiceDataTypes.Int,
                             "num_segment": ServiceDataTypes.Int}
+        self.context.create_state("downsample_rate", 240)
 
     def callback(self, input_data, frame_count, time_info, flags):
         self.audio_data_lock.acquire()
@@ -56,7 +57,15 @@ class MicrophoneCaptuerService(Service):
                 "sample_rate": RATE,
                 "num_segment": 1}
         if self.audio_data is not None:
-            msg["audio_frame"] = self.audio_data
+            audio_data = []
+            downsample_rate = 240
+            downsample_rate_state = self.context.get_state("downsample_rate")
+            if downsample_rate_state is not None:
+                downsample_rate = downsample_rate_state["downsample_rate"]
+            for i in range(0, len(self.audio_data), downsample_rate):
+                audio_data.append(self.audio_data[i])
+
+            msg["audio_frame"] = np.array(audio_data)
             msg["sample_rate"] = RATE
             msg["num_segment"] = 1
         self.audio_data_lock.release()

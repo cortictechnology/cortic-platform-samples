@@ -49,14 +49,6 @@ def process_result(rgb_image, detection_result):
                 [landmark.x, landmark.y, landmark.z])
         all_pose_landmarks.append(landmarks)
 
-        # if draw_landmarks:
-        #     # Draw the pose landmarks.
-        #     solutions.drawing_utils.draw_landmarks(
-        #     annotated_image,
-        #     pose_landmarks_proto,
-        #     solutions.pose.POSE_CONNECTIONS,
-        #     solutions.drawing_styles.get_default_pose_landmarks_style())
-
     return all_pose_landmarks
 
 
@@ -64,7 +56,8 @@ class PoseLandmarks(Service):
     def __init__(self):
         super().__init__()
         self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame}}
-        self.output_type = {"pose_landmarks": ServiceDataTypes.List}
+        self.output_type = {"input_image": ServiceDataTypes.CvFrame,
+                            "pose_landmarks": ServiceDataTypes.List}
 
         base_options = python.BaseOptions(model_asset_path=os.path.dirname(
             os.path.realpath(__file__)) + "/assets/pose_landmarker_lite.task")
@@ -76,16 +69,14 @@ class PoseLandmarks(Service):
         self.detector = vision.PoseLandmarker.create_from_options(self.options)
         log("PoseLandmarks: <p style='color:blue'>Activated</p>")
 
-    def configure(self, params):
-        pass
-
     def process(self, input_data=None):
         numpy_image = input_data["camera_input"]["frame"]
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
         detection_result = self.detector.detect(image)
         pose_landmarks = process_result(
             numpy_image, detection_result)
-        return {"pose_landmarks": pose_landmarks}
+        return {"input_image": numpy_image,
+                "pose_landmarks": pose_landmarks}
 
     def deactivate(self):
         self.detector = None

@@ -3,7 +3,7 @@
     "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
     "description": "This service captures feed from the Raspberry Pi Camera Module using the picamera2 library. It ensures seamless integration and offers real-time streaming capabilities. Ideal for various projects.",
     "major_version": "0",
-    "minor_version": "1",
+    "minor_version": "2",
     "platform": "Debian GNU/Linux",
     "architecture": "*",
     "hardware_requirements": {

@@ -28,9 +28,14 @@ class AudioFileCapture(Service):
                             "sample_rate": ServiceDataTypes.Int,
                             "num_segment": ServiceDataTypes.Int}
         self.chunk_count = 0
+        self.context.create_state("audio_file", "")
+        self.context.create_state("segment_duration", 1)
 
     def activate(self):
-        self.audio_file = self.context.get_state("audio_file", "")
+        self.audio_file = ""
+        audio_file_state = self.context.get_state("audio_file")
+        if audio_file_state is not None:
+            self.audio_file = audio_file_state["audio_file"]
         if self.audio_file == "":
             log("No audio file specified", LogLevel.ERROR)
             return
@@ -41,7 +46,10 @@ class AudioFileCapture(Service):
     def process(self, input_data=None):
         if self.audio_file == "":
             return {"audio_frame": np.array([]), "sample_rate": -1, "second": -1}
-        segment_duration = self.context.get_state("segment_duration", 1)
+        segment_duration = 1
+        segment_duration_state = self.context.get_state("segment_duration")
+        if segment_duration_state is not None:
+            segment_duration = segment_duration_state["segment_duration"]
         current_audio_frame = self.audio_np[self.chunk_count * self.sample_rate:(self.chunk_count + segment_duration) * self.sample_rate, :]
         self.chunk_count += segment_duration
         if self.chunk_count * self.sample_rate >= self.audio_np.shape[0]:

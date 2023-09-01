@@ -21,9 +21,13 @@ class VideoCapture(Service):
         self.frame_counter = 0
         self.input_type = {"grey_scale": ServiceDataTypes.Boolean}
         self.output_type = {"frame": ServiceDataTypes.CvFrame}
+        self.context.create_state("video_file", "")
 
     def activate(self):
-        self.video_file = self.context.get_state("video_file", "")
+        self.video_file = ""
+        video_file_state = self.context.get_state("video_file")
+        if video_file_state is not None:
+            self.video_file = video_file_state["video_file"]
         if self.video_file == "":
             log("No video file specified", LogLevel.Error)
             return
@@ -31,7 +35,10 @@ class VideoCapture(Service):
         log("VideoCapture: <p style='color:blue'>Activated</p>")
 
     def process(self, input_data=None):
-        self.video_file = self.context.get_state("video_file", "")
+        self.video_file = ""
+        video_file_state = self.context.get_state("video_file")
+        if video_file_state is not None:
+            self.video_file = video_file_state["video_file"]
         frame =np.zeros((480, 640, 3), np.uint8)
         if self.video_file == "":
             log("No video file specified", LogLevel.Warning)

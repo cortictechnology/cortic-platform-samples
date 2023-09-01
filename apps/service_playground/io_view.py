@@ -9,47 +9,55 @@ from utils import *
 
 class ClearButton(Container):
     def __init__(self, rect, background=app_styles.theme_color, radius=0, border_color=None, on_event=None):
-        super().__init__(rect, radius, border_color)
+        super().__init__(rect)
+        self.corner_radius = radius
+        self.border_color = border_color
         self.alpha = 1
-        self.clickable = True
-        self.background = background
-        self.on_event = on_event
+        self.capture_mouse_event = True
+        self.background_color = background
+        self.on_widget_event = on_event
 
-        self.icon = Icon([7, 0, 13, 16],
-                         color=app_styles.font_color, data="clear_all")
-        self.label = Label([25, 0, 34, 18],
-                           font_size=12,
-                           alignment="left",
-                           font_color=app_styles.font_color,
-                           data="Clear")
-        self.children.append(self.icon)
-        self.children.append(self.label)
+        self.icon = Icon([7, 0, 13, 16], data="clear_all")
+        self.icon.icon_color = app_styles.font_color
+
+        self.label = Label([25, 0, 34, 18], data="Clear")
+        self.label.font_size = 12
+        self.label.alignment = "left"
+        self.label.font_color = app_styles.font_color
+
+        self.add_child(self.icon)
+        self.add_child(self.label)
 
 
 class BrowseButton(Container):
     def __init__(self, rect, background=app_styles.theme_color, radius=0, border_color=None, on_event=None):
-        super().__init__(rect, radius, border_color)
+        super().__init__(rect)
+        self.corner_radius = radius
+        self.border_color = border_color
         self.alpha = 1
-        self.clickable = True
-        self.background = background
-        self.on_event = on_event
-        self.for_file_browser = True
-        self.icon = Icon([8, 5, 14, 16],
-                         color=app_styles.font_color, data="file_settings")
-        self.label = Label([27, 5, 50, 18],
-                           font_size=13,
-                           alignment="left",
-                           font_color=app_styles.font_color,
-                           data="Browse")
-        self.children.append(self.icon)
-        self.children.append(self.label)
+        self.capture_mouse_event = True
+        self.background_color = background
+        self.on_widget_event = on_event
+        self.for_file_picking = True
+
+        self.icon = Icon([8, 5, 14, 16], data="file_settings")
+        self.icon.icon_color = app_styles.font_color
+
+        self.label = Label([27, 5, 50, 18], data="Browse")
+        self.label.font_size = 12
+        self.label.alignment = "left"
+        self.label.font_color = app_styles.font_color
+        self.add_child(self.icon)
+        self.add_child(self.label)
 
 
 class IOView(Container):
     def __init__(self, rect, widget_tree, background=app_styles.theme_color, radius=0, border_color=None):
-        super().__init__(rect, radius, border_color)
+        super().__init__(rect)
+        self.corner_radius = radius
+        self.border_color = border_color
         self.widget_tree = widget_tree
-        self.background = background
+        self.background_color = background
         self.current_service_inputs = []
         self.current_service_outputs = []
         self.current_input_widgets = {}
@@ -115,26 +123,29 @@ class IOView(Container):
         self.input_container = Container(
             [38, 34, 481, 582])
         self.input_container.alpha = 1
-        self.input_container.radius = 10
-        self.input_container.background = app_styles.theme_color_content
+        self.input_container.corner_radius = 10
+        self.input_container.background_color = app_styles.theme_color_content
         self.input_container.border_color = app_styles.theme_color_content
 
-        self.title = Label([13, 2, 481, 18],
-                           font_color=app_styles.font_color_disabled,
-                           font_size=12,
-                           alignment="left",
-                           data="Input")
+        self.title = Label([20, 0, 481, 25], data="Input")
+        self.title.font_size = 12
+        self.title.font_color = app_styles.font_color
+        self.title.alignment = "left"
 
-        self.title_divider = HorizontalSeparator([0, 22, 481, 1],
-                                                 color=app_styles.divider_color_2, thickness=1)
+        self.title_divider = HorizontalSeparator([0, 26, 481, 1])
+        self.title_divider.line_color = app_styles.divider_color_2
+        self.title_divider.thickness = 1
 
         self.input_field_container = Container(
             [24, 83, 433, 285])
-        self.input_field_container.background = self.input_container.background
+        self.input_field_container.background_color = self.input_container.background_color
         self.input_field_container.border_color = self.input_container.border_color
 
-        self.default_input_message = Label([0, 83, 433, 285], font_size=15, alignment="center",
-                                           font_color=app_styles.font_color_disabled, data="This service does not require any input.")
+        self.default_input_message = Label(
+            [0, 83, 433, 285], data="This service does not require any input.")
+        self.default_input_message.font_size = 15
+        self.default_input_message.font_color = app_styles.font_color_dark
+        self.default_input_message.alignment = "center"
 
         self.clear_button = ClearButton(
             [385, 41, 71, 20], background=app_styles.theme_color_highlighted, radius=5, border_color=app_styles.theme_color_highlighted,
@@ -145,72 +156,71 @@ class IOView(Container):
             on_event=self.browse_button_callback)
         self.browse_button.visible = False
 
-        self.bottom_divider = HorizontalSeparator([0, 545, 481, 1],
-                                                  color=app_styles.divider_color_2, thickness=1)
+        self.input_type_bar = TabBar([38, 580, 481, 40])
+        self.input_type_bar.tab_label_font_size = 12
+        self.input_type_bar.tab_width = 115
+        self.input_type_bar.tab_height = 38
+        self.input_type_bar.tab_border_color = app_styles.divider_color_2
+        self.input_type_bar.selected_content_color = app_styles.font_color
+        self.input_type_bar.unselected_content_color = app_styles.font_color_dark
+        self.input_type_bar.indicator_color = app_styles.indicator_color
+        self.input_type_bar.unselected_tab_background_color = app_styles.item_color_1
+        self.input_type_bar.on_widget_event = self.on_select_input
+        self.input_type_bar.tab_corner_radii = [0, 0, 10, 10]
+        self.input_type_bar.show_indicator = False
 
-        self.input_type_bar = TabBar([38, 580, 481, 40],
-                                     texts=[],
-                                     tooltips=[],
-                                     text_size=14,
-                                     tab_width=115,
-                                     tab_height=38,
-                                     label_color=app_styles.font_color,
-                                     unselected_label_color=app_styles.font_color_disabled,
-                                     indicator_color=app_styles.indicator_color,
-                                     use_alternate_style=True)
-        self.input_type_bar.on_event = self.on_select_input
+        self.input_container.add_children([self.title,
+                                          self.title_divider, self.input_field_container, self.clear_button, self.browse_button])
 
-        self.input_container.children += [self.title,
-                                          self.title_divider, self.bottom_divider, self.input_field_container, self.clear_button, self.browse_button]
-
-        self.children.append(self.input_container)
-        self.children.append(self.input_type_bar)
+        self.add_child(self.input_container)
+        self.add_child(self.input_type_bar)
 
     def setup_output_container(self):
         self.output_container = Container(
             [567, 34, 481, 582])
         self.output_container.alpha = 1
-        self.output_container.radius = 10
-        self.output_container.background = app_styles.theme_color_content
+        self.output_container.corner_radius = 10
+        self.output_container.background_color = app_styles.theme_color_content
         self.output_container.border_color = app_styles.theme_color_content
 
-        self.title = Label([13, 2, 481, 18],
-                           font_color=app_styles.font_color_disabled,
-                           font_size=12,
-                           alignment="left",
-                           data="Output")
+        self.title = Label([20, 0, 481, 25], data="Output")
+        self.title.font_color = app_styles.font_color
+        self.title.font_size = 12
+        self.title.alignment = "left"
 
-        self.title_divider = HorizontalSeparator([0, 22, 481, 1],
-                                                 color=app_styles.divider_color_2, thickness=1)
+        self.title_divider = HorizontalSeparator([0, 25, 481, 1])
+        self.title_divider.line_color = app_styles.divider_color_2
+        self.title_divider.thickness = 1
 
         self.output_field_container = Container(
-            [24, 23, 433, 582-20-40-24])
-        self.output_field_container.background = self.output_container.background
+            [24, 26, 433, 582-20-40-24])
+        self.output_field_container.background_color = self.output_container.background_color
         self.output_field_container.border_color = self.output_container.border_color
 
-        self.default_output_message = Label([0, 83, 433, 285], font_size=15, alignment="center",
-                                            font_color=app_styles.font_color_disabled, data="This service does not produce any output.")
+        self.default_output_message = Label(
+            [0, 83, 433, 285], data="This service does not produce any output.")
+        self.default_output_message.font_size = 15
+        self.default_output_message.font_color = app_styles.font_color_dark
+        self.default_output_message.alignment = "center"
 
-        self.bottom_divider = HorizontalSeparator([0, 545, 481, 1],
-                                                  color=app_styles.divider_color_2, thickness=1)
+        self.output_type_bar = TabBar([568, 580, 481, 40])
+        self.output_type_bar.tab_label_font_size = 12
+        self.output_type_bar.tab_width = 115
+        self.output_type_bar.tab_height = 38
+        self.output_type_bar.tab_border_color = app_styles.divider_color_2
+        self.output_type_bar.selected_content_color = app_styles.font_color
+        self.output_type_bar.unselected_content_color = app_styles.font_color_dark
+        self.output_type_bar.indicator_color = app_styles.indicator_color
+        self.output_type_bar.unselected_tab_background_color = app_styles.item_color_1
+        self.output_type_bar.on_widget_event = self.on_select_output
+        self.output_type_bar.tab_corner_radii = [0, 0, 10, 10]
+        self.output_type_bar.show_indicator = False
 
-        self.output_type_bar = TabBar([568, 580, 481, 40],
-                                      texts=[],
-                                      tooltips=[],
-                                      text_size=14,
-                                      tab_width=115,
-                                      tab_height=38,
-                                      label_color=app_styles.font_color,
-                                      unselected_label_color=app_styles.font_color_disabled,
-                                      indicator_color=app_styles.indicator_color,
-                                      use_alternate_style=True)
-        self.output_type_bar.on_event = self.on_select_output
+        self.output_container.add_children([
+            self.title, self.title_divider, self.output_field_container])
 
-        self.output_container.children += [
-            self.title, self.title_divider, self.bottom_divider, self.output_field_container]
-
-        self.children.append(self.output_container)
-        self.children.append(self.output_type_bar)
+        self.add_child(self.output_container)
+        self.add_child(self.output_type_bar)
 
     def browse_button_callback(self, data):
         if data != "":
@@ -222,7 +232,7 @@ class IOView(Container):
                 self.current_input_data_numpy[self.current_input_name] = cv2.imread(
                     data)
                 frame_data = self.read_image(data)
-                self.current_input_widget.update_image(frame_data)
+                self.current_input_widget.set_data(frame_data)
                 self.current_input_data[self.current_input_name] = frame_data
             elif data.endswith(".mp4") or data.endswith(".avi") or data.endswith(".mov"):
                 self.video_capturers[self.current_input_name] = cv2.VideoCapture(
@@ -237,7 +247,7 @@ class IOView(Container):
                             first_frame, (0, 0), fx=0.5, fy=0.5)
                     frame_data = self.read_cv_frame(first_frame)
                     self.current_input_data_numpy[self.current_input_name] = first_frame
-                    self.current_input_widget.update_image(
+                    self.current_input_widget.set_data(
                         frame_data)
                     self.current_input_data[self.current_input_name] = frame_data
 
@@ -262,7 +272,7 @@ class IOView(Container):
                     input_data[input_name] = frame_data
                     self.current_input_data_numpy[input_name] = frame
                     self.current_input_data[input_name] = frame_data
-                    self.current_input_widgets[input_name].update_image(
+                    self.current_input_widgets[input_name].set_data(
                         input_data[input_name])
                 else:
                     input_data[input_name] = self.read_cv_frame(
@@ -300,7 +310,7 @@ class IOView(Container):
         self.current_input_widget = None
         self.current_input_type = None
 
-        self.input_field_container.children = []
+        self.input_field_container.clear_children()
 
         for service_input in self.current_service_inputs:
             input_type = get_data_type(service_input)
@@ -324,7 +334,7 @@ class IOView(Container):
             else:
                 if service_input in self.current_input_data:
                     input_widget.data = self.current_input_data[service_input]
-            self.input_field_container.children.append(input_widget)
+            self.input_field_container.add_child(input_widget)
         if self.current_input_type == "CvFrame":
             if not self.need_disable_input:
                 self.browse_button.visible = True
@@ -334,8 +344,8 @@ class IOView(Container):
         if on_selected_service:
             self.widget_tree.update(self.browse_button)
 
-        if len(self.input_field_container.children) == 0:
-            self.input_field_container.children.append(
+        if self.input_field_container.num_children() == 0:
+            self.input_field_container.add_child(
                 self.default_input_message)
             self.clear_button.visible = False
             self.widget_tree.update(self.clear_button)
@@ -358,7 +368,7 @@ class IOView(Container):
         self.current_output_widget = None
         self.current_output_type = None
 
-        self.output_field_container.children = []
+        self.output_field_container.clear_children()
 
         for service_output in self.current_service_outputs:
             output_type = get_data_type(service_output)
@@ -380,10 +390,10 @@ class IOView(Container):
                     output_widget.data = self.current_output_data[service_output]
                 else:
                     self.current_output_data[service_output] = None
-            self.output_field_container.children.append(output_widget)
+            self.output_field_container.add_child(output_widget)
 
-        if len(self.output_field_container.children) == 0:
-            self.output_field_container.children.append(
+        if self.output_field_container.num_children() == 0:
+            self.output_field_container.add_child(
                 self.default_output_message)
 
     def on_select_input(self, selected_idx):
@@ -438,10 +448,10 @@ class IOView(Container):
         self.current_service_outputs = get_service_output_list(service_data)
         self.refresh_input_widgets(on_selected_service=on_selected_service)
         self.refresh_output_widgets(on_selected_service=on_selected_service)
-        self.input_type_bar.texts = self.current_service_inputs
-        self.input_type_bar.tooltips = self.current_service_inputs
-        self.output_type_bar.texts = self.current_service_outputs
-        self.output_type_bar.tooltips = self.current_service_outputs
+        self.input_type_bar.tab_labels = self.current_service_inputs
+        self.input_type_bar.tab_tooltips = self.current_service_inputs
+        self.output_type_bar.tab_labels = self.current_service_outputs
+        self.output_type_bar.tab_tooltips = self.current_service_outputs
         self.widget_tree.update(self.input_field_container)
         self.widget_tree.update(self.input_type_bar)
         self.widget_tree.update(self.output_field_container)

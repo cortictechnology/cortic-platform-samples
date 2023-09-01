@@ -1,10 +1,3 @@
-""" 
-COPYRIGHT_NOTICE:
-Copyright (C) Cortic Technology Corp. - All Rights Reserved
-Written by Michael Ng <michaelng@cortic.ca>, 2022-2023
-COPYRIGHT_NOTICE
-"""
-
 from enum import IntEnum
 
 

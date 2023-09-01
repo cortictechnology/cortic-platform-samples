@@ -7,7 +7,3 @@ and guidelines to customize or extend the functionality of the framework by upda
 service_registry.json file as needed.
 """
 from cortic_platform.sdk.app_manager import service_handle
-@service_handle
-def sam(task_data, device_name='', on_result=None, timeout=None, service_states={}):
-  pass
-

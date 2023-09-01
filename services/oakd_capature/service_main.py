@@ -29,6 +29,10 @@ class OAKDCapture(Service):
         self.frame_capturer = None
         self.frame_width = 1280
         self.frame_height = 720
+        self.context.create_state("save_path", None)
+        self.context.create_state("action", "capture")
+        self.context.create_state("open_new_video", "")
+        self.context.create_state("landmarks", None)
 
     def activate(self):
         self.frame_capturer = VideoCapture()
@@ -38,7 +42,10 @@ class OAKDCapture(Service):
         video_file_name = input_data["video_file_name"]
         if video_file_name == "":
             video_file_name = None
-        save_path = self.context.get_state("save_path", None)
+        save_path = None
+        save_path_state = self.context.get_state("save_path")
+        if save_path_state is not None:
+            save_path = save_path_state["save_path"]
         landmarks_3d = np.array([])
         frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
 
@@ -46,16 +53,25 @@ class OAKDCapture(Service):
             self.frame_capturer.reset_video()
             self.context.reset_states()
 
-        action = self.context.get_state("action", "capture")
+        action = "capture"
+        action_state = self.context.get_state("action")
+        if action_state is not None:
+            action = action_state["action"]
         if action == "switch_to_depth":
             self.frame_capturer.switch_to_depth_pipeline()
         elif action == "switch_to_rgb":
             self.frame_capturer.switch_to_rgb_pipeline()
         elif action == "open_new_video":
-            self.frame_capturer.open_new_video(
-                self.context.get_state("open_new_video", ""))
+            video_path = ""
+            video_path_state = self.context.get_state("open_new_video")
+            if video_path_state is not None:
+                video_path = video_path_state["open_new_video"]
+            self.frame_capturer.open_new_video(video_path)
         elif action == "depth":
-            landmarks = self.context.get_state("landmarks", None)
+            landmarks = None
+            landmarks_state = self.context.get_state("landmarks")
+            if landmarks_state is not None:
+                landmarks = landmarks_state["landmarks"]
             if landmarks is not None:
                 landmarks = np.array(landmarks)
                 rois = np.zeros((len(landmarks), 4))

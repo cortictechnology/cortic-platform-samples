@@ -22,6 +22,7 @@ from multiprocessing.connection import Client
 from cortic_logger import CorticLogger
 import sys
 from contextlib import redirect_stdout, redirect_stderr
+from cortic_platform.sdk.service import ServiceStatus
 from cortic_platform.sdk.service_data_types import ServiceDataTypes
 from cortic_platform.sdk.logging import log, LogLevel
 
@@ -79,10 +80,13 @@ def communication_func():
                 activate_service = msg["activate"]
             elif "set_states" in msg:
                 if this_service is not None:
-                    this_service.context._set_states(msg["set_states"]["hub"],
-                                                     msg["set_states"]["app"],
-                                                     msg["set_states"]["pipeline"],
-                                                     msg["set_states"]["states"])
+                    states = msg["set_states"]["states"]
+                    for state_name in states:
+                        this_service.context._set_state(msg["set_states"]["hub"],
+                                                        msg["set_states"]["app"],
+                                                        msg["set_states"]["pipeline"],
+                                                        state_name,
+                                                        states[state_name])
             elif "get_states" in msg:
                 if this_service is not None:
                     states = this_service.context.states
@@ -101,6 +105,9 @@ def communication_func():
             elif "restore_states" in msg:
                 if this_service is not None:
                     this_service.context.states = msg["restore_states"]
+            elif "clear_states" in msg:
+                if this_service is not None:
+                    this_service.context.clear_states()
             elif "stop_service" in msg:
                 stop_service = True
             elif "pause_service" in msg:
@@ -127,7 +134,7 @@ def alive_func():
         if (time.time() - dm_process_last_alive_time) > 3 * alive_time_check_period:
             log("Device manager process is not alive", LogLevel.Error)
             stop_service = True
-        time.sleep(alive_time_check_period)
+        time.sleep(alive_time_check_period / 2)
 
 
 def log_callback(log):
@@ -302,24 +309,26 @@ def main(
     dm_conn_lock.acquire()
     dm_conn_sender.send(
         {
-            "status": "Idle",
+            "status": "Activated",
             "input_type": json.dumps(this_service.input_type),
             "output_type": json.dumps(this_service.output_type),
+            "service_states": json.dumps(this_service.context.states)
         }
     )
     dm_conn_lock.release()
 
     while not stop_service:
         if activate_service:
-            if not this_service.activated:
+            if this_service.status != ServiceStatus.Activated:
                 try:
                     log("Activating " + service_name + "...")
                     this_service.activate()
-                    this_service.activated = True
+                    this_service.status = ServiceStatus.Activated
                     dm_conn_lock.acquire()
-                    dm_conn_sender.send({"status": "Processing"})
+                    dm_conn_sender.send({"status": "Idle"})
                     dm_conn_lock.release()
                 except Exception:
+                    this_service.status = ServiceStatus.Deactivated
                     logging.error(traceback.format_exc())
                     dm_conn_lock.acquire()
                     dm_conn_sender.send(
@@ -458,7 +467,8 @@ def main(
                                         LogLevel.Error,
                                     )
                                 else:
-                                    result_data[data_name] = result_data[data_name].tolist()
+                                    result_data[data_name] = result_data[data_name].tolist(
+                                    )
                             elif (
                                 this_service.output_type[data_name]
                                 == ServiceDataTypes.String
@@ -582,9 +592,9 @@ def main(
                                 }
                             }
                         dm_conn_lock.acquire()
-                        dm_conn_sender.send(result_msg)
+                        dm_conn_sender.send(json.dumps(result_msg))
                         dm_conn_lock.release()
-                        # print("Send result for task:", self_guid)
+
                         remaining_time = 1.0 / processing_fps - (
                             time.time() - start_time
                         )
@@ -643,12 +653,14 @@ def main(
                                     LogLevel.Error,
                                 )
                             else:
-                                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 25]
+                                encode_param = [
+                                    int(cv2.IMWRITE_JPEG_QUALITY), 25]
                                 _, buffer = cv2.imencode(
                                     ".jpg", result_data[data_name], encode_param
                                 )
                                 imgByteArr = base64.b64encode(buffer)
-                                result_data[data_name] = imgByteArr.decode("ascii")
+                                result_data[data_name] = imgByteArr.decode(
+                                    "ascii")
                         elif (
                             this_service.output_type[data_name]
                             == ServiceDataTypes.NumpyArray
@@ -662,7 +674,8 @@ def main(
                                     LogLevel.Error,
                                 )
                             else:
-                                result_data[data_name] = result_data[data_name].tolist()
+                                result_data[data_name] = result_data[data_name].tolist(
+                                )
                         elif (
                             this_service.output_type[data_name]
                             == ServiceDataTypes.List
@@ -715,7 +728,7 @@ def main(
                                 )
                     dm_conn_lock.acquire()
                     dm_conn_sender.send(
-                        {
+                        json.dumps({
                             "task_result": {
                                 "self_guid": "for_pipeline",
                                 "result": result_data,
@@ -725,7 +738,7 @@ def main(
                                 "for_pipeline": True,
                                 "stateful": len(this_service.context.states) > 0,
                             }
-                        }
+                        })
                     )
                     dm_conn_lock.release()
                     remaining_time = 1.0 / processing_fps - \
@@ -735,17 +748,17 @@ def main(
                 else:
                     time.sleep(0.005)
         else:
-            if this_service.activated:
+            if this_service.status == ServiceStatus.Activated:
                 log("Deactivating " + service_name + "...")
                 this_service.deactivate()
-                this_service.activated = False
+                this_service.status = ServiceStatus.Deactivated
                 dm_conn_lock.acquire()
-                dm_conn_sender.send({"status": "Idle"})
+                dm_conn_sender.send({"status": "Activated"})
                 dm_conn_lock.release()
             else:
                 time.sleep(1)
     log("Stopping service")
-    if this_service.activated:
+    if this_service.status == ServiceStatus.Activated:
         log("Deactivating " + service_name + "...")
         this_service.deactivate()
         log(service_name + " Deactivated (end)")
