@@ -65,6 +65,31 @@ class ServicePlayground(App):
                     "_" + service["major_version"] + \
                     "_" + service["minor_version"]
                 self.available_services[service_key] = service
+                if service_key not in self.states_view.states:
+                    self.states_view.states[service_key] = {}
+                    service_states = service["service_states"]
+                    states = {}
+                    state_types = {}
+                    for state_name in service_states:
+                        state_value = service_states[state_name]
+                        state_type = "String"
+                        if isinstance(state_value, dict):
+                            state_type = "Json"
+                        elif isinstance(state_value, list):
+                            state_type = "List"
+                        elif isinstance(state_value, bool):
+                            state_type = "Boolean"
+                        elif isinstance(state_value, str):
+                            state_type = "String"
+                        elif isinstance(state_value, float):
+                            state_type = "Float"
+                        elif isinstance(state_value, int):
+                            state_type = "Int"
+                        states[state_name] = state_value
+                        state_types[state_name] = state_type
+                    self.states_view.states[service_key] = states
+                    self.states_view.state_types[service_key] = state_types
+
             for service in self.available_services:
                 self.available_services_list.append(
                     self.available_services[service]["service_name"])

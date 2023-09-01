@@ -91,7 +91,7 @@ class ServiceContext:
                     value indicates failure.
 
         """
-        self._set_state(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline, state_name, state_value, from_self=True)
+        return self._set_state(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline, state_name, state_value, from_self=True)
 
     def _set_state(self, hub_name, app_name, pipeline_name, state_name, state_value, from_self=False):
         if state_name not in self._default_states:

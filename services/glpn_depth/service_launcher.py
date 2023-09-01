@@ -312,7 +312,7 @@ def main(
             "status": "Activated",
             "input_type": json.dumps(this_service.input_type),
             "output_type": json.dumps(this_service.output_type),
-            "service_states": json.dumps(this_service.context.states)
+            "service_states": json.dumps(this_service.context._default_states)
         }
     )
     dm_conn_lock.release()

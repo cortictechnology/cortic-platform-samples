@@ -84,9 +84,10 @@ class StatesView(Container):
         self.remove_state_divider.thickness = 1
 
         self.listview_container.add_children([self.listview_title_bar,
-                                             self.add_state_divider,
-                                             self.add_state_button, self.remove_state_button,
-                                             self.remove_state_divider])
+                                              #  self.add_state_divider,
+                                              #  self.add_state_button, self.remove_state_button,
+                                              #  self.remove_state_divider
+                                              ])
 
         self.add_child(self.listview_container)
 
@@ -127,7 +128,6 @@ class StatesView(Container):
                 state_label.paddings = [42, 15, 0, 0]
                 state_label.enable_markdown = False
                 state_label.highlighted_font_color = app_styles.font_color
-
                 state_type = Label(
                     [0, 0, 113, 54], data=self.state_types[self.current_service_key][state])
                 state_type.alpha = 1
@@ -221,4 +221,4 @@ class StatesView(Container):
             if self.current_service_key not in self.states:
                 self.states[self.current_service_key] = {}
                 self.state_types[self.current_service_key] = {}
-            self.update_states()
+        self.update_states()
