@@ -9,10 +9,11 @@ from file_navigation_panel import FileNavigationPanel
 from layout_preview import LayoutPreview
 import time
 import sys
+import os
 import inspect
 import importlib
 from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
+from watchdog.events import FileSystemEventHandler
 
 # Uncomment the following lines to enable debugpy so that you can attach a debugger to the app
 # in VSCode. A vscode configuration is already provided in the .vscode folder. You will need to
@@ -22,18 +23,15 @@ from watchdog.events import PatternMatchingEventHandler
 # import debugpy
 # debugpy.listen(("0.0.0.0", 5678))
 
-class  FileChangeHandler(PatternMatchingEventHandler):
-    def  __init__(self, patterns=None, file_change_callback=None):
-        super(FileChangeHandler, self).__init__(patterns=patterns)
+class  FileChangeHandler(FileSystemEventHandler):
+    def  __init__(self, file_change_callback=None):
         self.file_change_callback = file_change_callback
 
     def  on_modified(self,  event):
-        super(FileChangeHandler, self).on_modified(event)
         if self.file_change_callback is not None:
             self.file_change_callback(event.src_path)
 
     def  on_deleted(self,  event):
-        super(FileChangeHandler, self).on_deleted(event)
         if self.file_change_callback is not None:
             self.file_change_callback(event.src_path)
 
@@ -52,6 +50,13 @@ class UILayoutTool(App):
         file_name = self.layout_files[file_index]["file_name"]
         module_name = file_name.split(".")[0]
         file_path = self.layout_file_paths[self.layout_files[file_index]["file_name_unique"]]
+        file_dir = file_path.split(self.layout_files[file_index]["file_name"])[0]
+        files_in_dir = os.listdir(file_dir)
+        for file in files_in_dir:
+            if ".py" in file:
+                module_name = file.split(".")[0]
+                if module_name in sys.modules:
+                    importlib.reload(sys.modules[module_name])
         spec = importlib.util.spec_from_file_location(module_name, file_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -85,8 +90,7 @@ class UILayoutTool(App):
                 if current_file_dir in sys.path:
                     sys.path.remove(current_file_dir)
             self.selected_file = data
-            self.file_change_handler = FileChangeHandler(patterns=["*/" + self.layout_files[data]["file_name"]],
-                                                         file_change_callback=self.file_change_callback)
+            self.file_change_handler = FileChangeHandler(file_change_callback=self.file_change_callback)
             self.observer = Observer()
             file_path = self.layout_file_paths[self.layout_files[data]["file_name_unique"]]
             file_dir = file_path.split(self.layout_files[data]["file_name"])[0]
