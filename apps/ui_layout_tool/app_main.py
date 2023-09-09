@@ -12,6 +12,7 @@ import sys
 import os
 import inspect
 import importlib
+import traceback
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -46,7 +47,7 @@ class UILayoutTool(App):
         self.file_change_handler = None
         self.observer = None
 
-    def load_widget_group(self, file_index):
+    def load_widget_preview(self, file_index):
         file_name = self.layout_files[file_index]["file_name"]
         module_name = file_name.split(".")[0]
         file_path = self.layout_file_paths[self.layout_files[file_index]["file_name_unique"]]
@@ -60,28 +61,40 @@ class UILayoutTool(App):
         spec = importlib.util.spec_from_file_location(module_name, file_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        valid_widget_module = False
-        for name, _ in inspect.getmembers(module):
-            if name == "WidgetGroup":
-                valid_widget_module = True
-                break
-        if valid_widget_module:
-            widget_group_instance = module.WidgetGroup()
-            widget_group = widget_group_instance.create()
-            return widget_group
+        valid_widget_classes = []
+        for name, obj in inspect.getmembers(module):
+            if inspect.isclass(obj):
+                if issubclass(obj, Container) and obj.__name__ != "Container":
+                        valid_widget_classes.append({"name": name, "obj": obj})
+        valid_widgets = {}
+        if len(valid_widget_classes) > 0:
+            for widget_class in valid_widget_classes:
+                try:
+                    widget = widget_class["obj"]()
+                    if widget.rect[2] == 0 or widget.rect[3] == 0:
+                        log("Widget with name " + widget_class["name"] + " has 0 width or height", LogLevel.Error)
+                    else:
+                        valid_widgets[widget_class["name"]] = widget
+                except Exception as e:
+                    log("Error creating widget " +  widget_class["name"] + " with error: " + str(e), LogLevel.Error)
+                    print(traceback.format_exc())
         else:
-            return None
+            log("No valid Container subclass found in file", LogLevel.Error)
+        return valid_widgets
         
     def file_change_callback(self, file_path):
+        widget_previews = []
         try:
-            widget_group = self.load_widget_group(self.selected_file)
+            widget_previews = self.load_widget_preview(self.selected_file)
         except Exception as e:
             log("Error loading widget group: " + str(e), LogLevel.Error)
             return
-        if widget_group is not None:
-            self.layout_preview.update_preview(widget_group)
+        if len(widget_previews) > 0:
+            self.layout_preview.update_preview(widget_previews)
 
     def on_select_file(self, data):
+        if len(self.layout_preview.current_avaliable_widget_previews) > 0:
+            self.layout_preview.clear_preview()
         if data >=0 and len(self.layout_files) > 0:
             if self.observer is not None:
                 self.observer.stop()
@@ -100,12 +113,12 @@ class UILayoutTool(App):
             self.layout_preview.visible = True
             self.widget_tree.update(self.layout_preview)
             try:
-                widget_group = self.load_widget_group(data)
+                widget_previews = self.load_widget_preview(self.selected_file)
             except Exception as e:
                 log("Error loading widget group: " + str(e), LogLevel.Error)
                 return
-            if widget_group is not None:
-                self.layout_preview.update_preview(widget_group)
+            if len(widget_previews) > 0:
+                self.layout_preview.update_preview(widget_previews)
                 
     def setup_file_navigation_bar(self):
         self.file_navigation_bar = Container([0, 0, 200, self.app_height])
@@ -146,6 +159,7 @@ class UILayoutTool(App):
     
     def on_remove_file(self, data):
         if self.selected_file >= 0 and len(self.layout_files) > 0:
+            del self.layout_file_paths[self.layout_files[self.selected_file]["file_name_unique"]]
             self.layout_files.pop(self.selected_file)
             self.file_list.update(self.layout_files, self.layout_file_paths)
             time.sleep(0.05)

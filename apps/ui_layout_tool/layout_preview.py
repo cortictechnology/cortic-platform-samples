@@ -15,7 +15,8 @@ class LayoutPreview(Container):
         self.current_file_path = None
         self.widget_group_container_width = rect[2]-14
         self.widget_group_container_height = rect[3]-14-26
-        
+        self.current_avaliable_widget_previews = {}
+        self.current_selected_widget_preview_name = ""
 
         self.preview_container = Container([5, 5, rect[2]-14, rect[3]-14])
         self.preview_container.background_color = ui_layout_tool_styles.theme_color_content
@@ -26,6 +27,21 @@ class LayoutPreview(Container):
         self.title.font_size = 12
         self.title.font_color = ui_layout_tool_styles.font_color_dark
         self.title.alignment = "left"
+
+        self.preview_widgets_label = Label([rect[2]-19-105-75-185-115, 0, 110, 25], data="Widget to Preview")
+        self.preview_widgets_label.font_size = 12
+        self.preview_widgets_label.font_color = ui_layout_tool_styles.font_color_dark
+        self.preview_widgets_label.alignment = "left"
+
+        self.preview_widgets_dropdown = DropdownList(
+            [rect[2]-19-105-75-185, 2, 160, 21])
+        self.preview_widgets_dropdown.background_color = ui_layout_tool_styles.item_color_1
+        self.preview_widgets_dropdown.border_color = ui_layout_tool_styles.item_color_1
+        self.preview_widgets_dropdown.focused_field_border_color = ui_layout_tool_styles.item_color_1
+        self.preview_widgets_dropdown.corner_radius = 5
+        self.preview_widgets_dropdown.label_font_size = 12
+        self.preview_widgets_dropdown.label_font_color = ui_layout_tool_styles.font_color
+        self.preview_widgets_dropdown.on_widget_event = self.update_preview_widget
 
         self.fitting_mode_label = Label([rect[2]-19-105-75, 0, 75, 25], data="Scale Mode")
         self.fitting_mode_label.font_size = 12
@@ -53,7 +69,9 @@ class LayoutPreview(Container):
         self.widget_group_container.border_color = ui_layout_tool_styles.theme_color_content
         self.widget_group_container.border_thickness = 0
 
-        self.preview_container.add_children([self.title, 
+        self.preview_container.add_children([self.title,
+                                             self.preview_widgets_label,
+                                             self.preview_widgets_dropdown,
                                              self.fitting_mode_label,
                                              self.fitting_mode_dropdown,
                                              self.title_divider, 
@@ -67,12 +85,25 @@ class LayoutPreview(Container):
         elif mode == "full_size":
             self.widget_group_container.child_fitting_mode = "full_size"
         self.widget_tree.update(self.widget_group_container)
-        
-    def update_preview(self, widget_group):
-        self.widget_group_container.clear_children()
-        self.widget_group_container.add_child(widget_group)
-        self.widget_tree.update(self.widget_group_container)
 
+    def update_preview_widget(self, widget_name):
+        self.current_selected_widget_preview_name = widget_name
+        self.widget_group_container.clear_children()
+        self.widget_group_container.add_child(self.current_avaliable_widget_previews[widget_name])
+        self.widget_tree.update(self.widget_group_container)
+        
+    def update_preview(self, widget_previews):
+        self.current_avaliable_widget_previews = widget_previews
+        widget_names = []
+        for widget_name in self.current_avaliable_widget_previews:
+            widget_names.append(widget_name)
+        self.preview_widgets_dropdown.set_data(widget_names)
+        if self.current_selected_widget_preview_name != "":
+            if self.current_selected_widget_preview_name in self.current_avaliable_widget_previews:
+                self.update_preview_widget(self.current_selected_widget_preview_name)
+        
     def clear_preview(self):
+        self.current_avaliable_widget_previews = {}
+        self.preview_widgets_dropdown.set_data([])
         self.widget_group_container.clear_children()
         self.widget_tree.update(self.widget_group_container)
