@@ -9,4 +9,5 @@ dependencies:
 # do not change the python version, it is used by the runtime, and the service may not work if you change it
 - python==3.9
 - pip
+- pip:
   - watchdog

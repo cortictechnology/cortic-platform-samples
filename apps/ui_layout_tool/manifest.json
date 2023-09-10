@@ -1,13 +1,1 @@
-{
-    "developer_identifier": "2d5e6c11-a400-433a-b97e-02630922cb20",
-    "name": "UI Layout Tool",
-    "description": "This tool allows you to create and edit UI layouts for your app. All changes saved while the app is running will be automatically reloaded. You will see the changes in the app immediately.",
-    "major_version": "0",
-    "minor_version": "1",
-    "conda_env_name": "cortic_ai_development",
-    "entry_point": "UILayoutTool",
-    "max_fps": 30,
-    "scale_mode": "aspect_fit",
-    "enable_debug_log": false,
-    "debug_log_max_kb_size": 100
-}
+{"developer_identifier":"2d5e6c11-a400-433a-b97e-02630922cb20","name":"UI Layout Tool","description":"This tool allows you to create and edit UI layouts for your app. All changes saved while the app is running will be automatically reloaded. You will see the changes in the app immediately.","major_version":"0","minor_version":"1","conda_env_name":"cortic_ai_development","entry_point":"UILayoutTool","max_fps":30,"scale_mode":"aspect_fit","enable_debug_log":false,"debug_log_max_kb_size":100}
