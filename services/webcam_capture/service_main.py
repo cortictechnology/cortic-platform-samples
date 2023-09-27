@@ -26,7 +26,8 @@ class WebcamCaptureService(Service):
         self.output_type = {"frame": ServiceDataTypes.CvFrame}
         self.stop = False
         self.context.create_state("camera_index", 0)
-        self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
+        self.frame = np.zeros(
+            (self.frame_height, self.frame_width, 3), np.uint8)
         self.grab_frame_thread = None
 
     def activate(self):
@@ -35,19 +36,33 @@ class WebcamCaptureService(Service):
             self.camera_idx = camera_idx_state["camera_index"]
             if self.camera_idx >= 0:
                 self.frame_capturer = cv2.VideoCapture(self.camera_idx)
-                self.frame_capturer.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
-                self.frame_capturer.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
+                self.frame_capturer.set(
+                    cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
+                self.frame_capturer.set(
+                    cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
                 self.stop = False
-                self.grab_frame_thread = threading.Thread(target=self.grab_frame_func, daemon=True)
+                self.grab_frame_thread = threading.Thread(
+                    target=self.grab_frame_func, daemon=True)
                 self.grab_frame_thread.start()
                 log("WebcamCapture: <p style='color:blue'>Activated</p>")
 
     def grab_frame_func(self):
         while not self.stop:
+            camera_idx_state = self.context.get_state("camera_index")
+            camera_idx = camera_idx_state["camera_index"]
+            if camera_idx != self.camera_idx:
+                self.camera_idx = camera_idx
+                self.frame_capturer.release()
+                self.frame_capturer = cv2.VideoCapture(self.camera_idx)
+                self.frame_capturer.set(
+                    cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
+                self.frame_capturer.set(
+                    cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
             if self.camera_idx >= 0:
                 _, frame = self.frame_capturer.read()
                 if frame is None:
-                    self.frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
+                    self.frame = np.zeros(
+                        (self.frame_height, self.frame_width, 3), np.uint8)
                 else:
                     self.frame = frame
             else:
@@ -57,7 +72,8 @@ class WebcamCaptureService(Service):
         if self.frame_capturer is None:
             self.activate()
         if self.frame is None:
-            frame = np.zeros((self.frame_height, self.frame_width, 3), np.uint8)
+            frame = np.zeros(
+                (self.frame_height, self.frame_width, 3), np.uint8)
         else:
             frame = self.frame.copy()
         return {"frame": frame}

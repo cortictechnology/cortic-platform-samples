@@ -316,7 +316,6 @@ def main(
         }
     )
     dm_conn_lock.release()
-
     while not stop_service:
         if activate_service:
             if this_service.status != ServiceStatus.Activated:
