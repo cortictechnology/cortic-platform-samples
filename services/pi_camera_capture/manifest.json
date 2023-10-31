@@ -5,7 +5,7 @@
     "major_version": "0",
     "minor_version": "2",
     "platform": "Debian GNU/Linux",
-    "architecture": "*",
+    "architecture": "aarch64",
     "hardware_requirements": {
         "min_num_cpu_core": 1,
         "min_cpu_frequency": 500,
@@ -13,7 +13,7 @@
         "min_free_disk": 0,
         "required_connected_usb_devices": []
     },
-    "is_data_source": false,
+    "is_data_source": true,
     "service_class": "PiCameraCapture",
     "processing_queue_size": 100,
     "service_processing_fps": 30,

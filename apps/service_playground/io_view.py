@@ -111,7 +111,7 @@ class IOView(Container):
     def clear_data(self, data):
         self.current_input_widget.clear_data()
         if self.current_input_name in self.current_input_data:
-            self.current_input_data[self.current_input_name] = None
+            self.current_input_data[self.current_input_name].clear_data()
         if self.current_input_name in self.current_input_data_numpy:
             del self.current_input_data_numpy[self.current_input_name]
         if self.current_input_name in self.video_capturers:
@@ -327,13 +327,16 @@ class IOView(Container):
                 self.current_input_name = service_input
             self.current_input_widgets[service_input] = input_widget
             if on_selected_service:
-                if input_type == "Boolean":
-                    self.current_input_data[service_input] = input_widget.data
-                else:
-                    self.current_input_data[service_input] = None
+                self.current_input_data[service_input] = input_widget.get_data(
+                )
+                # if input_type == "Boolean":
+                #     self.current_input_data[service_input] = input_widget.data
+                # else:
+                #     self.current_input_data[service_input] = None
             else:
                 if service_input in self.current_input_data:
-                    input_widget.data = self.current_input_data[service_input]
+                    input_widget.set_data(
+                        self.current_input_data[service_input])
             self.input_field_container.add_child(input_widget)
         if self.current_input_type == "CvFrame":
             if not self.need_disable_input:
@@ -400,7 +403,8 @@ class IOView(Container):
         input_name = self.current_service_inputs[selected_idx]
         if self.current_input_widget != None:
             if self.current_input_name != input_name:
-                self.current_input_data[self.current_input_name] = self.current_input_widget.data
+                self.current_input_data[self.current_input_name] = self.current_input_widget.get_data(
+                )
                 self.current_input_widget.visible = False
                 self.widget_tree.update(self.current_input_widget)
                 self.current_input_name = input_name
@@ -417,7 +421,8 @@ class IOView(Container):
                         self.browse_button.visible = False
                         self.widget_tree.update(self.browse_button)
                 if self.current_input_data[self.current_input_name] is not None:
-                    self.current_input_widget.data = self.current_input_data[self.current_input_name]
+                    self.current_input_widget.set_data(
+                        self.current_input_data[self.current_input_name])
 
     def on_select_output(self, selected_idx):
         output_name = self.current_service_outputs[selected_idx]

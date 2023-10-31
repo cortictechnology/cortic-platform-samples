@@ -238,8 +238,6 @@ class ServicePlayground(App):
             if self.selected_service > 0:
                 if self.selected_service == len(self.services_in_playground):
                     self.selected_service -= 1
-                self.service_list.listview.set_selected_item(
-                    self.selected_service)
             else:
                 self.selected_service = -1
                 self.selected_service_key = None
@@ -250,8 +248,8 @@ class ServicePlayground(App):
                 self.widget_tree.update(self.states_view)
                 self.default_message.visible = True
                 self.widget_tree.update(self.default_message)
-                self.service_list.listview.set_selected_item(
-                    self.selected_service)
+            self.service_list.listview.set_selected_item(
+                self.selected_service)
 
     def setup_service_button_container(self):
         self.button_container = Container([0, self.app_height-31, 200, 31])
@@ -415,15 +413,18 @@ class ServicePlayground(App):
         service_input_data, data_ended = self.io_view.get_current_input_data()
         for input_name in service_input_data:
             if service_input_data[input_name] is None:
+                print("input: ", input_name, " is None")
                 return None, data_ended
         for input_name in self.io_view.current_input_widgets:
             if "CvFrame" in input_name:
                 service_input_data[input_name] = self.io_view.current_input_data_numpy[input_name]
             else:
+                print("Encoding: ", input_name)
                 service_input_data[input_name] = encode_input(get_data_type(
-                    input_name), self.io_view.current_input_widgets[input_name].data)
+                    input_name), self.io_view.current_input_widgets[input_name].get_data())
         for input_name in service_input_data:
             if service_input_data[input_name] is None:
+                print("input: ", input_name, " is None")
                 return None, data_ended
         return service_input_data, data_ended
 

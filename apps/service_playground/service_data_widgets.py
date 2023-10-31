@@ -28,7 +28,7 @@ class BooleanWidget(Container):
         self.toggle.active_color = app_styles.button_color
         self.toggle.on_widget_event = self.on_toggle
 
-        self.data = self.toggle.data
+        self.data = self.toggle.get_data()
         self.add_child(self.toggle)
 
     def on_toggle(self, data):
@@ -37,11 +37,19 @@ class BooleanWidget(Container):
     def enable_input(self):
         self.toggle.enable = True
 
-    def disable_input(self):
-        self.toggle.enable = False
+    def get_data(self):
+        return self.data
+
+    def set_data(self, data):
+        self.toggle.set_data(data)
+        self.data = self.toggle.get_data()
 
     def clear_data(self):
         self.toggle.clear_data()
+        self.data = self.toggle.get_data()
+
+    def disable_input(self):
+        self.toggle.enable = False
 
 
 class NumpyArrayWidget(Container):
@@ -72,6 +80,7 @@ class NumpyArrayWidget(Container):
             [170, 13, 121, 25], items=self.visualization_modes)
         self.visualization_mode_dropdown.background_color = app_styles.item_color_1
         self.visualization_mode_dropdown.border_color = app_styles.item_color_1
+        self.visualization_mode_dropdown.focused_field_border_color = app_styles.item_color_1
         self.visualization_mode_dropdown.corner_radius = 5
         self.visualization_mode_dropdown.label_font_size = 14
         self.visualization_mode_dropdown.label_font_color = app_styles.font_color
@@ -248,6 +257,15 @@ class ListWidget(Container):
                               self.raw_data_widget, self.image_widget])
         else:
             self.add_child(self.raw_data_widget)
+
+    def get_data(self):
+        return self.raw_data_widget.get_data()
+
+    def clear_data(self):
+        self.current_data = None
+        self.current_input_images = None
+        self.current_input_name = None
+        self.raw_data_widget.clear_data()
 
     def change_visualization_mode(self, mode):
         if mode == "Raw Data":
