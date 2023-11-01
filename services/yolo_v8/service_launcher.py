@@ -528,7 +528,8 @@ def main(
                                 serializable = True
                                 try:
                                     json.dumps(result_data[data_name])
-                                except:
+                                except Exception as e:
+                                    print(e)
                                     serializable = False
                                 if not serializable:
                                     result_data[data_name] = None
@@ -748,6 +749,7 @@ def main(
                 log("Deactivating " + service_name + "...")
                 this_service.deactivate()
                 this_service.status = ServiceStatus.Deactivated
+                task_queue.clear()
                 
                 dm_conn_sender.send({"status": "Activated"})
                 
@@ -757,6 +759,7 @@ def main(
     if this_service.status == ServiceStatus.Activated:
         log("Deactivating " + service_name + "...")
         this_service.deactivate()
+        task_queue.clear()
         log(service_name + " Deactivated (end)")
     log("Exiting service process loop")
     
