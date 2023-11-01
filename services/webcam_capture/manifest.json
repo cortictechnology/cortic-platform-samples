@@ -14,8 +14,10 @@
         "required_connected_usb_devices": []
     },
     "is_data_source": true,
+    "is_singleton": false,
     "service_class": "WebcamCaptureService",
     "processing_queue_size": 100,
     "service_processing_fps": 30,
+    "image_compress_quality": 40,
     "service_id": "b849a252-e10d-412a-877a-68d70e3f74e2"
 }

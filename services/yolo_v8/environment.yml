@@ -1,0 +1,17 @@
+# do not change the name below as it is automatically generated and used by the runtime
+name: 78ba05ff-803b-4656-a32a-99b56be0c597_yolo_v8_0_1
+# you can add more channels here, but do not remove any channels below
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+# do not change the python version, it is used by the runtime, and the service may not work if you change it
+- python==3.9
+- pip
+- pip:
+  - --extra-index-url https://download.pytorch.org/whl/cu117 [windows]
+  - torch==2.0.1+cu117 [windows]
+  - ultralytics
+  - opencv-python
+  - numpy

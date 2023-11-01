@@ -1,0 +1,23 @@
+{
+    "service_name": "Byte Tracker",
+    "developer_identifier": "78ba05ff-803b-4656-a32a-99b56be0c597",
+    "description": "This service tracks the objects in an image using the ByteTrack algorithm. It associates a unique ID with each object and tracks it across frames. It also provides the bounding box coordinates for each object.",
+    "major_version": "0",
+    "minor_version": "1",
+    "platform": "macOS, Windows, Ubuntu",
+    "architecture": "x86_64, arm64, aarch64",
+    "hardware_requirements": {
+        "min_num_cpu_core": 4,
+        "min_cpu_frequency": 1000,
+        "min_free_memory": 0,
+        "min_free_disk": 0,
+        "required_connected_usb_devices": [],
+        "compatible_video_cards": []
+    },
+    "is_data_source": false,
+    "is_singleton": false,
+    "service_class": "ByteTracker",
+    "processing_queue_size": 100,
+    "service_processing_fps": 30,
+    "image_compress_quality": 40
+}

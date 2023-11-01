@@ -6,7 +6,10 @@ COPYRIGHT_NOTICE
 """
 from abc import abstractmethod
 from enum import Enum
+import json
+import os
 from cortic_platform.sdk.service_data_types import *
+
 
 class ServiceStatus(Enum):
     Deactivated = 0
@@ -14,6 +17,7 @@ class ServiceStatus(Enum):
     Idle = 2
     Processing = 3
     FailedToStart = 4
+
 
 class ServiceContext:
     """
@@ -69,7 +73,8 @@ class ServiceContext:
         """
         if state_name not in self._default_states:
             return None
-        key = self.service._current_task_source_hub + "_" + self.service._current_task_source_app + "_" + self.service._current_task_source_pipeline + "_" + state_name
+        key = self.service._current_task_source_hub + "_" + self.service._current_task_source_app + \
+            "_" + self.service._current_task_source_pipeline + "_" + state_name
         if self.service.config is not None:
             if self.service.config["is_data_source"]:
                 key = "___" + state_name
@@ -77,7 +82,7 @@ class ServiceContext:
             self.states[key] = self._default_states[state_name]
         return {state_name: self.states[key]}
 
-    def set_state(self, state_name, state_value):
+    def set_state(self, state_name, state_value, change_default=False):
         """
         Sets the value of a state. If the state does not exist, an error code is returned.
 
@@ -91,11 +96,16 @@ class ServiceContext:
                     value indicates failure.
 
         """
-        return self._set_state(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline, state_name, state_value, from_self=True)
+        return self._set_state(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline, state_name, state_value, from_self=True, change_default=change_default)
 
-    def _set_state(self, hub_name, app_name, pipeline_name, state_name, state_value, from_self=False):
+    def _set_state(self, hub_name, app_name, pipeline_name, state_name, state_value, from_self=False, change_default=False):
         if state_name not in self._default_states:
             return -15
+        if change_default:
+            self._default_states[state_name] = state_value
+            if from_self and self._dm_connection is not None:
+                self._dm_connection.send(
+                    {"service_states": json.dumps(self._default_states)})
         key = hub_name + "_" + app_name + "_" + pipeline_name + "_" + state_name
         if self.service.config is not None:
             if self.service.config["is_data_source"]:
@@ -103,23 +113,22 @@ class ServiceContext:
         if key not in self.states:
             self.states[key] = self._default_states[state_name]
         self.states[key] = state_value
-        if from_self:
-            if self._dm_connection is not None:
-                self._dm_connection.send({"service_states": {"key": key, "value": state_value}})
+
         return 0
-    
+
     def reset_states(self):
         """
         Resets all states to their default values.
 
         """
-        self._reset_states(self.service._current_task_source_hub, self.service._current_task_source_app, self.service._current_task_source_pipeline)
+        self._reset_states(self.service._current_task_source_hub,
+                           self.service._current_task_source_app, self.service._current_task_source_pipeline)
 
     def _reset_states(self, hub_name, app_name, pipeline_name):
         target_key = hub_name + "_" + app_name + "_" + pipeline_name
         if self.service.config is not None:
             if self.service.config["is_data_source"]:
-                target_key = "___" 
+                target_key = "___"
         for key in list(self.states.keys()):
             if target_key in key:
                 del self.states[key]
@@ -132,7 +141,8 @@ class ServiceContext:
         """
         self.states = {}
         self._default_states = {}
-    
+
+
 class Service:
     """
     The Service class is a versatile foundation for developers to build custom services that can be
@@ -152,6 +162,9 @@ class Service:
     def __init__(self):
         """Initializes a service"""
         self.status = ServiceStatus.Deactivated
+        self.config = None
+        with open(os.path.dirname(os.path.realpath(__file__)) + "/../../manifest.json") as f:
+            self.config = json.loads(f.read())
         self.context = ServiceContext()
         self.context.service = self
         self.input_type = {}

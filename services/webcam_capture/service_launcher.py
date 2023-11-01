@@ -94,9 +94,9 @@ def communication_func():
                         # Not supporting numpy arrays for now as they are not json serializable
                         if isinstance(states[key], np.ndarray):
                             del states[key]
-                    dm_conn_lock.acquire()
+
                     dm_conn_sender.send("service_states", states)
-                    dm_conn_lock.release()
+
             elif "reset_states" in msg:
                 if this_service is not None:
                     this_service.context._reset_states(msg["reset_states"]["hub"],
@@ -115,9 +115,7 @@ def communication_func():
             elif "resume_service" in msg:
                 pause_service = False
             elif "ping" in msg:
-                dm_conn_lock.acquire()
                 dm_conn_sender.send("pong")
-                dm_conn_lock.release()
             msg = None
         except Exception as e:
             log("error: " + str(traceback.format_exc()), LogLevel.Error)
@@ -144,18 +142,15 @@ def log_callback(log):
     global dm_conn_sender
     global historical_log
     global sent_historical_log
-    if dm_conn is not None:
+    if dm_conn_sender is not None:
         if not sent_historical_log:
             historical_log = historical_log + log
-            dm_conn_lock.acquire()
             dm_conn_sender.send({"cortic_service_log": historical_log})
-            dm_conn_lock.release()
             historical_log = ""
             sent_historical_log = True
         else:
-            dm_conn_lock.acquire()
             dm_conn_sender.send({"cortic_service_log": log})
-            dm_conn_lock.release()
+
     else:
         historical_log = historical_log + log
 
@@ -190,9 +185,11 @@ def main(
         this_service = service()
     except Exception as e:
         log(
-            "Failed to initialize service class, error: " + str(e),
+            "Failed to initialize service class, error: " +
+            str(traceback.format_exc()),
             LogLevel.Error,
         )
+
         fatal_error = True
     this_service.config = service_config
     is_data_source = service_config["is_data_source"]
@@ -306,7 +303,8 @@ def main(
         return
 
     log(service_name + " is initialized")
-    dm_conn_lock.acquire()
+    this_service.context._dm_connection = dm_conn_sender
+
     dm_conn_sender.send(
         {
             "status": "Activated",
@@ -315,7 +313,7 @@ def main(
             "service_states": json.dumps(this_service.context._default_states)
         }
     )
-    dm_conn_lock.release()
+
     while not stop_service:
         if activate_service:
             if this_service.status != ServiceStatus.Activated:
@@ -323,13 +321,13 @@ def main(
                     log("Activating " + service_name + "...")
                     this_service.activate()
                     this_service.status = ServiceStatus.Activated
-                    dm_conn_lock.acquire()
+
                     dm_conn_sender.send({"status": "Idle"})
-                    dm_conn_lock.release()
+
                 except Exception:
                     this_service.status = ServiceStatus.Deactivated
                     logging.error(traceback.format_exc())
-                    dm_conn_lock.acquire()
+
                     dm_conn_sender.send(
                         {
                             "exception": {
@@ -340,7 +338,7 @@ def main(
                             }
                         }
                     )
-                    dm_conn_lock.release()
+
             # if len(task_queue) > 0:
             if len(task_queue) > 0:
                 task_data = task_queue.popleft()
@@ -361,7 +359,7 @@ def main(
                         peer_names = []
                         for input_name in task_data["data"]:
                             data = task_data["data"][input_name]
-                            if isinstance(data, dict):
+                            if isinstance(data, dict) and this_service.input_type[input_name] != ServiceDataTypes.Json:
                                 for data_name in data:
                                     if data_name == "peer_names":
                                         peer_names = peer_names + \
@@ -446,7 +444,7 @@ def main(
                                     )
                                 else:
                                     encode_param = [
-                                        int(cv2.IMWRITE_JPEG_QUALITY), 25]
+                                        int(cv2.IMWRITE_JPEG_QUALITY), service_config["image_compress_quality"]]
                                     _, buffer = cv2.imencode(
                                         ".jpg", result_data[data_name], encode_param
                                     )
@@ -590,9 +588,8 @@ def main(
                                     "stateful": len(this_service.context.states) > 0,
                                 }
                             }
-                        dm_conn_lock.acquire()
+
                         dm_conn_sender.send(json.dumps(result_msg))
-                        dm_conn_lock.release()
 
                         remaining_time = 1.0 / processing_fps - (
                             time.time() - start_time
@@ -609,7 +606,7 @@ def main(
                             LogLevel.Error,
                         )
                         print(traceback.format_exc())
-                        dm_conn_lock.acquire()
+
                         dm_conn_sender.send(
                             {
                                 "task_result": {
@@ -627,7 +624,6 @@ def main(
                                 }
                             }
                         )
-                        dm_conn_lock.release()
 
             else:
                 if (
@@ -653,7 +649,7 @@ def main(
                                 )
                             else:
                                 encode_param = [
-                                    int(cv2.IMWRITE_JPEG_QUALITY), 25]
+                                    int(cv2.IMWRITE_JPEG_QUALITY), service_config["image_compress_quality"]]
                                 _, buffer = cv2.imencode(
                                     ".jpg", result_data[data_name], encode_param
                                 )
@@ -725,7 +721,7 @@ def main(
                                     + " is not serializable, replaced data with None. Please check your service code.",
                                     LogLevel.Error,
                                 )
-                    dm_conn_lock.acquire()
+
                     dm_conn_sender.send(
                         json.dumps({
                             "task_result": {
@@ -739,7 +735,7 @@ def main(
                             }
                         })
                     )
-                    dm_conn_lock.release()
+
                     remaining_time = 1.0 / processing_fps - \
                         (time.time() - start_time)
                     if remaining_time > 0:
@@ -751,9 +747,9 @@ def main(
                 log("Deactivating " + service_name + "...")
                 this_service.deactivate()
                 this_service.status = ServiceStatus.Deactivated
-                dm_conn_lock.acquire()
+
                 dm_conn_sender.send({"status": "Activated"})
-                dm_conn_lock.release()
+
             else:
                 time.sleep(1)
     log("Stopping service")
@@ -762,9 +758,8 @@ def main(
         this_service.deactivate()
         log(service_name + " Deactivated (end)")
     log("Exiting service process loop")
-    dm_conn_lock.acquire()
+
     dm_conn_sender.send({"status": "Deactivated"})
-    dm_conn_lock.release()
 
 
 if __name__ == "__main__":
