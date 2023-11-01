@@ -9,6 +9,7 @@ import cv2
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from labels import idx_list, label_list
 
 # Uncomment the following lines to enable debugpy so that you can attach a debugger to the app
 # in VSCode. A vscode configuration is already provided in the .vscode folder. You will need to
@@ -63,8 +64,12 @@ def process_result(image, detection_result):
         category_name = category.category_name
         probability = round(category.score, 2)
 
+        position = label_list.index(category_name)
+        category_idx = idx_list[position]
+
         detected_objects.append(
             {'category': category_name,
+             'category_id': category_idx,
              'probability': probability,
              'bbox': [x1, y1, x2, y2]})
 
@@ -82,10 +87,11 @@ class ObjectDetection(Service):
     def __init__(self):
         super().__init__()
         self.input_type = {"camera_input": {"frame": ServiceDataTypes.CvFrame}}
-        self.output_type = {"detected_objects": ServiceDataTypes.List}
+        self.output_type = {
+            "detections": ServiceDataTypes.List, "frame": ServiceDataTypes.CvFrame}
         self.threshold = 0.5
         base_options = python.BaseOptions(model_asset_path=os.path.dirname(
-            os.path.realpath(__file__)) + "/assets/efficientdet_lite0.tflite")
+            os.path.realpath(__file__)) + "/assets/ssd_mobilenet_v2.tflite")
         self.options = vision.ObjectDetectorOptions(base_options=base_options,
                                                     score_threshold=self.threshold)
         self.detector = None
@@ -103,7 +109,7 @@ class ObjectDetection(Service):
         detection_result = self.detector.detect(image)
         detected_objects = process_result(
             numpy_image, detection_result)
-        return {"detected_objects": detected_objects}
+        return {"detections": detected_objects, "frame": numpy_image}
 
     def deactivate(self):
         self.detector = None
