@@ -63,7 +63,16 @@ def generate_service_input_data(service_data, input_data):
 
 def encode_input(data_type, data):
     if data_type == "NumpyArray":
-        return np.array(ast.literal_eval(data))
+        array_data = data
+        if not isinstance(array_data, np.ndarray):
+            if isinstance(array_data, str):
+                array_data = ast.literal_eval(array_data)
+            try:
+                array_data = np.array(array_data)
+            except:
+                raise Exception(
+                    "Invalid input data type for NumpyArray, cannot convert to numpy array")
+        return array_data
     elif data_type == "Int":
         return int(data)
     elif data_type == "Float":

@@ -9,3 +9,4 @@ dependencies:
 - pip:
   - numpy
   - opencv-python
+  - av==10.0.0

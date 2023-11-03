@@ -156,23 +156,32 @@ class NumpyArrayWidget(Container):
 
     def set_data(self, data):
         self.current_data = data
-        if self.current_visualization_mode == "Raw Data":
-            self.raw_data_widget.data = str(data)
-        elif self.current_visualization_mode == "1D Plot":
-            data_array = np.array(data).flatten().tolist()
-            for i in range(len(data_array)):
-                data_point = [self.data_counter,
-                              data_array[i]]
-                self.current_1d_data_points.append(data_point)
-                if len(self.current_1d_data_points) > self.max_data_points:
-                    self.current_1d_data_points.pop(0)
-                self.data_counter += 1
-            if len(self.current_1d_data_points) > 0:
-                self.current_start_domain = self.current_1d_data_points[0][0]
-                self.current_end_domain = self.current_1d_data_points[-1][0]
-            self.plot_widget.set_domain(
-                self.current_start_domain, self.current_end_domain)
-            self.plot_widget.set_data([self.current_1d_data_points])
+        if self.for_output:
+            if self.current_visualization_mode == "Raw Data":
+                self.raw_data_widget.data = str(data)
+            elif self.current_visualization_mode == "1D Plot":
+                data_array = np.array(data).flatten().tolist()
+                for i in range(len(data_array)):
+                    data_point = [self.data_counter,
+                                  data_array[i]]
+                    self.current_1d_data_points.append(data_point)
+                    if len(self.current_1d_data_points) > self.max_data_points:
+                        self.current_1d_data_points.pop(0)
+                    self.data_counter += 1
+                if len(self.current_1d_data_points) > 0:
+                    self.current_start_domain = self.current_1d_data_points[0][0]
+                    self.current_end_domain = self.current_1d_data_points[-1][0]
+                self.plot_widget.set_domain(
+                    self.current_start_domain, self.current_end_domain)
+                self.plot_widget.set_data([self.current_1d_data_points])
+        else:
+            # only show first 1000 data points
+            data_array = data.flatten().tolist()
+            data_array = data_array[:1000]
+            self.raw_data_widget.set_data(str(data_array) + " ...")
+
+    def get_data(self):
+        return self.current_data
 
 
 class ListWidget(Container):

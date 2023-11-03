@@ -5,6 +5,7 @@ import base64
 import app_styles
 from service_data_widgets import get_data_widget
 from utils import *
+from audio_utils import decode_audio
 
 
 class ClearButton(Container):
@@ -82,7 +83,7 @@ class IOView(Container):
 
     def disable_input(self):
         self.need_disable_input = True
-        if self.current_input_type == "CvFrame":
+        if self.current_input_type == "CvFrame" or self.current_input_type == "NumpyArray":
             if self.browse_button.visible:
                 self.browse_button.visible = False
                 self.widget_tree.update(self.browse_button)
@@ -96,7 +97,7 @@ class IOView(Container):
 
     def enable_input(self):
         self.need_disable_input = False
-        if self.current_input_type == "CvFrame":
+        if self.current_input_type == "CvFrame" or self.current_input_type == "NumpyArray":
             if not self.browse_button.visible:
                 self.browse_button.visible = True
                 self.widget_tree.update(self.browse_button)
@@ -224,32 +225,38 @@ class IOView(Container):
 
     def browse_button_callback(self, data):
         if data != "":
-            if data.endswith(".jpg") or data.endswith(".jpeg") or data.endswith(".png") or data.endswith(".bmp"):
-                if self.current_input_name in self.video_capturers:
-                    self.video_capturers[self.current_input_name].release()
-                    del self.video_capturers[self.current_input_name]
-                    del self.video_capturers_frame_count[self.current_input_name]
-                self.current_input_data_numpy[self.current_input_name] = cv2.imread(
-                    data)
-                frame_data = self.read_image(data)
-                self.current_input_widget.set_data(frame_data)
-                self.current_input_data[self.current_input_name] = frame_data
-            elif data.endswith(".mp4") or data.endswith(".avi") or data.endswith(".mov"):
-                self.video_capturers[self.current_input_name] = cv2.VideoCapture(
-                    data)
-                self.video_capturers_frame_count[self.current_input_name] = 0
-                ret, first_frame = self.video_capturers[self.current_input_name].read(
-                )
-                if ret:
-                    self.video_capturers_frame_count[self.current_input_name] += 1
-                    if first_frame.shape[0] > 1000 or first_frame.shape[1] > 560:
-                        first_frame = cv2.resize(
-                            first_frame, (0, 0), fx=0.5, fy=0.5)
-                    frame_data = self.read_cv_frame(first_frame)
-                    self.current_input_data_numpy[self.current_input_name] = first_frame
-                    self.current_input_widget.set_data(
-                        frame_data)
+            if self.current_input_type != "NumpyArray":
+                if data.endswith(".jpg") or data.endswith(".jpeg") or data.endswith(".png") or data.endswith(".bmp"):
+                    if self.current_input_name in self.video_capturers:
+                        self.video_capturers[self.current_input_name].release()
+                        del self.video_capturers[self.current_input_name]
+                        del self.video_capturers_frame_count[self.current_input_name]
+                    self.current_input_data_numpy[self.current_input_name] = cv2.imread(
+                        data)
+                    frame_data = self.read_image(data)
+                    self.current_input_widget.set_data(frame_data)
                     self.current_input_data[self.current_input_name] = frame_data
+                elif data.endswith(".mp4") or data.endswith(".avi") or data.endswith(".mov"):
+                    self.video_capturers[self.current_input_name] = cv2.VideoCapture(
+                        data)
+                    self.video_capturers_frame_count[self.current_input_name] = 0
+                    ret, first_frame = self.video_capturers[self.current_input_name].read(
+                    )
+                    if ret:
+                        self.video_capturers_frame_count[self.current_input_name] += 1
+                        if first_frame.shape[0] > 1000 or first_frame.shape[1] > 560:
+                            first_frame = cv2.resize(
+                                first_frame, (0, 0), fx=0.5, fy=0.5)
+                        frame_data = self.read_cv_frame(first_frame)
+                        self.current_input_data_numpy[self.current_input_name] = first_frame
+                        self.current_input_widget.set_data(
+                            frame_data)
+                        self.current_input_data[self.current_input_name] = frame_data
+            else:
+                if data.endswith(".mp3") or data.endswith(".wav"):
+                    audio_data = decode_audio(data)
+                    self.current_input_data[self.current_input_name] = audio_data
+                    self.current_input_widget.set_data(audio_data)
 
     def get_current_input_data(self):
         input_data = {}
@@ -338,7 +345,7 @@ class IOView(Container):
                     input_widget.set_data(
                         self.current_input_data[service_input])
             self.input_field_container.add_child(input_widget)
-        if self.current_input_type == "CvFrame":
+        if self.current_input_type == "CvFrame" or self.current_input_type == "NumpyArray":
             if not self.need_disable_input:
                 self.browse_button.visible = True
         else:
@@ -412,7 +419,7 @@ class IOView(Container):
                 self.current_input_widget = self.current_input_widgets[input_name]
                 self.current_input_widget.visible = True
                 self.widget_tree.update(self.current_input_widget)
-                if self.current_input_type == "CvFrame":
+                if self.current_input_type == "CvFrame" or self.current_input_type == "NumpyArray":
                     if not self.need_disable_input:
                         self.browse_button.visible = True
                         self.widget_tree.update(self.browse_button)

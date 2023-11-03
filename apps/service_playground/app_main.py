@@ -419,7 +419,6 @@ class ServicePlayground(App):
             if "CvFrame" in input_name:
                 service_input_data[input_name] = self.io_view.current_input_data_numpy[input_name]
             else:
-                print("Encoding: ", input_name)
                 service_input_data[input_name] = encode_input(get_data_type(
                     input_name), self.io_view.current_input_widgets[input_name].get_data())
         for input_name in service_input_data:
@@ -458,7 +457,7 @@ class ServicePlayground(App):
             service_data = service_function(
                 input_data, service_states=service_states)
             if service_data:
-                service_output = service_data.get_data()
+                service_output = service_data.get_data(timeout=600)
         if for_warmup:
             self.loader.visible = False
             self.blank_screen.visible = False

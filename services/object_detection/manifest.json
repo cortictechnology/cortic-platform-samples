@@ -16,7 +16,7 @@
     "is_data_source": false,
     "service_class": "ObjectDetection",
     "processing_queue_size": 100,
-    "service_processing_fps": 30,
+    "service_processing_fps": 60,
     "image_compress_quality": 40,
     "service_id": "2d026e11-ab32-4b23-b247-a9dcd74ff44c"
 }
