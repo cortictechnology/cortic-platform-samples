@@ -1,5 +1,5 @@
 # do not change the name below as it is automatically generated and used by the runtime
-name: 78ba05ff-803b-4656-a32a-99b56be0c597_local_llm_0_1
+name: 78ba05ff-803b-4656-a32a-99b56be0c597_langchain_chat_0_1
 # you can add more channels here, but do not remove any channels below
 channels:
   - anaconda
@@ -16,6 +16,8 @@ dependencies:
   - llama-cpp-python
   - opencv-python
   - requests
+  - langchain
+  - pydantic==1.10.9
 variables:
   CMAKE_ARGS: "-DLLAMA_METAL=on" [osx]
   CMAKE_ARGS: "-DLLAMA_CUBLAS=on" [cuda]

@@ -1,0 +1,23 @@
+{
+    "service_name": "Langchain Chat",
+    "developer_identifier": "78ba05ff-803b-4656-a32a-99b56be0c597",
+    "description": "This service uses Langchain with a local LLM to provide a chatbot service. The template of the LLM uses OpenAI's Chat Markup Language (ChatML).",
+    "major_version": "0",
+    "minor_version": "1",
+    "platform": "macOS, Windows, Ubuntu",
+    "architecture": "arm64, x86_64",
+    "hardware_requirements": {
+        "min_num_cpu_core": 4,
+        "min_cpu_frequency": 1800,
+        "min_free_memory": 12884901888,
+        "min_free_disk": 10737418240,
+        "required_connected_usb_devices": [],
+        "compatible_video_cards": []
+    },
+    "is_data_source": false,
+    "is_singleton": false,
+    "service_class": "LangchainChat",
+    "processing_queue_size": 100,
+    "service_processing_fps": 30,
+    "image_compress_quality": 40
+}
