@@ -2,7 +2,6 @@ from cortic_platform.sdk.service import Service
 from cortic_platform.sdk.logging import log, LogLevel
 from cortic_platform.sdk.service_data_types import ServiceDataTypes
 import multiprocessing as mp
-import platform
 import torch
 import queue
 import multiprocessing as mp
@@ -25,6 +24,7 @@ def whisper_worker(input_queue, output_queue, model_size, device, compute_type):
     while True:
         audio_data = input_queue.get()
         if audio_data is None:
+            print("Received None, terminating...")
             break
         segments, info = model.transcribe(audio_data, beam_size=5)
         segment_texts = []
@@ -50,9 +50,8 @@ class FasterWhisper(Service):
                             "language_probability": ServiceDataTypes.Float,
                             "transcript": ServiceDataTypes.String,
                             "segment_texts": ServiceDataTypes.List}
-        self.model_size = "medium"
+        self.model_size = None
         self.valid_model_size = ["small", "medium", "large-v2"]
-        self.model = None
         self.device = "cpu"
         self.compute_type = "float16"
         self.whisper_process = None
@@ -85,11 +84,15 @@ class FasterWhisper(Service):
             log("Invalid model size, using medium model instead",
                 log_level=LogLevel.Warning)
             model_size = "medium"
-        if self.model is None or self.model_size != model_size:
+        if self.model_size != model_size:
             self.model_size = model_size
+            print(
+                "Currently loaded model is not the same as the requested model, loading new...")
             if self.whisper_process is not None:
                 self.whisper_process.terminate()
                 self.whisper_process.join()
+                print("Old process terminated")
+            print("Creating new process...")
             self.whisper_process = mp.Process(target=whisper_worker,
                                               args=(self.input_queue,
                                                     self.output_queue,
@@ -97,6 +100,7 @@ class FasterWhisper(Service):
                                                     self.device,
                                                     self.compute_type))
             self.whisper_process.start()
+            print("New process started")
         output = None
         blocking = self.context.get_state("blocking")["blocking"]
         self.input_queue.put(audio_data)
@@ -128,11 +132,9 @@ class FasterWhisper(Service):
             self.whisper_process.terminate()
             self.whisper_process.join()
         self.whisper_process = None
-        self.output_queue.put(None)
         self.input_queue = mp.Queue()
         self.output_queue = mp.Queue()
-        self.model_size = "medium"
-        self.model = None
+        self.model_size = None
         self.device = "cpu"
         self.compute_type = "float16"
         log("FasterWhisper service deactivated", log_level=LogLevel.Info)
