@@ -1,0 +1,9 @@
+{
+    "faster_whisper_transcription": {
+        "developer_identifier": "78ba05ff-803b-4656-a32a-99b56be0c597",
+        "service_name": "Faster Whisper Transcription",
+        "major_version": "0",
+        "minor_version": "1",
+        "service_path": "/../../../services/78ba05ff-803b-4656-a32a-99b56be0c597/faster_whisper"
+    }
+}

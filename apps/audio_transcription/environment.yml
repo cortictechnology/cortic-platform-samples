@@ -1,0 +1,15 @@
+# do not change the name below as it is automatically generated and used by the runtime
+name: cortic_ai_development
+# you can add more channels here, but do not remove any channels below
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+# do not change the python version, it is used by the runtime, and the service may not work if you change it
+- python==3.9
+- pip
+- pip:
+  - opencv-python
+  - numpy
+  - av==10.0.0
