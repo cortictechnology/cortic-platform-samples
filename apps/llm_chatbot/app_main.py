@@ -22,7 +22,7 @@ class LLMPlayground(App):
         self.widget_tree.add_child(self.main_screen)
         self.widget_tree.build()
 
-        self.main_screen.add_bot_message("Hello, I am Cortic AI. How can I help you?")
+        self.main_screen.add_bot_message("Hello, I am Cortic AI. Nice to meet you!")
 
     def process(self):
         self.widget_tree.update()

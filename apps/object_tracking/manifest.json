@@ -1,0 +1,14 @@
+{
+    "developer_identifier": "78ba05ff-803b-4656-a32a-99b56be0c597",
+    "name": "Object Tracking",
+    "description": "This is the default manifest",
+    "major_version": "0",
+    "minor_version": "1",
+    "conda_env_name": "cortic_ai_development",
+    "entry_point": "ObjectTracking",
+    "max_fps": 60,
+    "scale_mode": "aspect_fit",
+    "image_compression_quality": 30,
+    "enable_debug_log": false,
+    "debug_log_max_kb_size": 100
+}

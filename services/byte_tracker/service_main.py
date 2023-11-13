@@ -2,6 +2,7 @@ from cortic_platform.sdk.service import Service
 from cortic_platform.sdk.logging import log, LogLevel
 from cortic_platform.sdk.service_data_types import ServiceDataTypes
 from boxmot import BYTETracker
+from boxmot.trackers.bytetrack.basetrack import BaseTrack
 import numpy as np
 
 # Uncomment the following lines to enable debugpy so that you can attach a debugger to the app
@@ -22,6 +23,7 @@ class ByteTracker(Service):
         self.tracker = None
 
     def activate(self):
+        BaseTrack._count = 0
         self.tracker = BYTETracker()
 
     def process(self, input_data=None):

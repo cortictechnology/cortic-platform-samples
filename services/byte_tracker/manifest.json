@@ -18,6 +18,6 @@
     "is_singleton": false,
     "service_class": "ByteTracker",
     "processing_queue_size": 100,
-    "service_processing_fps": 30,
+    "service_processing_fps": 60,
     "image_compress_quality": 40
 }

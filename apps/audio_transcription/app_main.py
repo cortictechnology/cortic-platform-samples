@@ -1,8 +1,9 @@
 from cortic_platform.sdk import App
 from cortic_platform.sdk.logging import log, LogLevel
+from cortic_platform.sdk.app_events import ExceptionTypes
 from service_registry import *
 from widgets.main_screen import MainScreen
-from cortic_platform.sdk.app_events import ExceptionTypes
+
 
 # Uncomment the following lines to enable debugpy so that you can attach a debugger to the app
 # in VSCode. A vscode configuration is already provided in the .vscode folder. You will need to

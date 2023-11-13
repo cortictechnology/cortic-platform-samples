@@ -82,7 +82,7 @@ class NumpyArrayWidget(Container):
         self.plot_widget.chart_properties["gradient_orientation"] = "vertical"
         self.plot_widget.start_range = -1
         self.plot_widget.end_range = 1
-        self.plot_widget.corner_radius = 10
+        self.plot_widget.corner_radius = styles.corner_radius
         self.plot_widget.background = styles.text_field_color
         self.plot_widget.border_color = styles.text_field_color
 

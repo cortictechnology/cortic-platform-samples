@@ -1,7 +1,7 @@
 {
-    "service_name": "Yolo V8",
+    "service_name": "Faster Whisper Transcription",
     "developer_identifier": "78ba05ff-803b-4656-a32a-99b56be0c597",
-    "description": "This is a Yolo V8 object detection service. Three models are provided: yolov8n, yolov8s, yolov8m. The model size is from small to medium. The larger the model, the more accurate the detection, but the slower the detection speed. The default model is yolov8n.",
+    "description": "This service uses the faster-whisper library. It can perform audio language detection and transcription.",
     "major_version": "0",
     "minor_version": "1",
     "platform": "macOS, Windows, Ubuntu",
@@ -16,8 +16,8 @@
     },
     "is_data_source": false,
     "is_singleton": false,
-    "service_class": "YoloV8",
+    "service_class": "FasterWhisper",
     "processing_queue_size": 100,
-    "service_processing_fps": 60,
+    "service_processing_fps": 30,
     "image_compress_quality": 40
 }

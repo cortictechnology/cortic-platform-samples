@@ -1,7 +1,10 @@
 import styles
-import os
 import math
-import base64
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
+from utils import isEnglish
 from cortic_platform.sdk.ui.basic_widgets import Container, Label, Image
 
 class UserChatBubble(Container):
@@ -15,6 +18,7 @@ class UserChatBubble(Container):
         self.alpha = 0
         self.data = data
         self.char_per_line = 40
+        self.non_english_char_per_line = 20
         self.max_num_line = 5
 
         self.user_name = Label([styles.user_bubble_width - styles.user_name_width, 
@@ -42,10 +46,14 @@ class UserChatBubble(Container):
         self.user_message.corner_radius = styles.user_message_corner_radius
         self.user_message.background_color = styles.text_field_color
         self.user_message.border_color = styles.text_field_color
+        self.user_message.selectable = True
+        self.user_message.enable_markdown = False
 
         num_line = math.ceil(len(data) / self.char_per_line)
-        if num_line > self.max_num_line:
-            self.user_message.scrollable = True
+        if not isEnglish(data):
+            num_line = math.ceil(len(data) / self.non_english_char_per_line)
+        # if num_line > self.max_num_line+1:
+        #     self.user_message.scrollable = True
         if num_line > self.max_num_line:
             num_line = self.max_num_line
         self.user_message.rect[3] = styles.user_message_height * num_line - (num_line - 1) * styles.user_message_padding 

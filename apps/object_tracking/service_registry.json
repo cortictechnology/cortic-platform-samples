@@ -1,0 +1,30 @@
+{
+    "yolo_v8": {
+        "developer_identifier": "78ba05ff-803b-4656-a32a-99b56be0c597",
+        "service_name": "Yolo V8",
+        "major_version": "0",
+        "minor_version": "1",
+        "service_path": "/../../../services/78ba05ff-803b-4656-a32a-99b56be0c597/yolo_v8"
+    },
+    "byte_tracker": {
+        "developer_identifier": "78ba05ff-803b-4656-a32a-99b56be0c597",
+        "service_name": "Byte Tracker",
+        "major_version": "0",
+        "minor_version": "1",
+        "service_path": "/../../../services/78ba05ff-803b-4656-a32a-99b56be0c597/byte_tracker"
+    },
+    "webcam_capture": {
+        "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+        "service_name": "Webcam Capture",
+        "major_version": "0",
+        "minor_version": "4",
+        "service_path": "/../../../cortic-platform-samples/services/webcam_capture"
+    },
+    "object_detection": {
+        "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
+        "service_name": "Object Detection",
+        "major_version": "0",
+        "minor_version": "3",
+        "service_path": "/../../../cortic-platform-samples/services/object_detection"
+    }
+}
