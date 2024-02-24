@@ -3,7 +3,7 @@
     "developer_identifier": "00d40118-56b8-4a03-9f16-b2b675381f0d",
     "description": "This service detects human face landmarks in images using the OpenCV Mat object with Google MediaPipe's Face Landmarker solution.",
     "major_version": "0",
-    "minor_version": "3",
+    "minor_version": "5",
     "platform": "macOS, Windows, Ubuntu",
     "architecture": "x86_64, arm64, aarch64",
     "hardware_requirements": {
